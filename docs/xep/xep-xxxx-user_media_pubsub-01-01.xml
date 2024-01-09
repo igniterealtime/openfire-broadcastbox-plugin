@@ -85,7 +85,11 @@
 <iq to='any-user@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='get'>
 	<pubsub xmlns='http://jabber.org/protocol/pubsub'>
 		<items node='urn:xmpp:sdp:1'>
-			<item id="ih28sx61" />
+			<item id="ih28sx61">
+				<sdp xmlns='urn:xmpp:sdp:1'>
+					SDP OFFER
+				</sdp>			
+			</item>
 		</items>
 	</pubsub>
 </iq>	
