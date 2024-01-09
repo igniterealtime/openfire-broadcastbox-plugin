@@ -63,9 +63,9 @@
     ]]></example> 
     <example caption='The server responds with an SDP answer for the client'><![CDATA[  
 <iq to='juliet@capulet.lit/broadcast' id='ih28sx61' from='shakespeare.lit' type='result'>
-	<sdp xmlns='urn:xmpp:sdp:1'>
-		SDP ANSWER
-	</sdp>
+  <sdp xmlns='urn:xmpp:sdp:1'>
+    SDP ANSWER
+  </sdp> 
 </iq>	
     ]]></example> 
     <example caption='The server sends a user media stream notification to all subscribers with no payload'><![CDATA[  
@@ -96,13 +96,9 @@
     ]]></example> 
     <example caption='The server responds with an SDP answer for the client'><![CDATA[  
 <iq to='any-user@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='result'>
-	<items node='urn:xmpp:sdp:1'>
-		<item id="ih28sx61">
-			<sdp xmlns='urn:xmpp:sdp:1'>
-				SDP ANSWER
-			</sdp> 
-		</item>
-	</items>
+  <sdp xmlns='urn:xmpp:sdp:1'>
+    SDP ANSWER
+  </sdp>  
 </iq>	
     ]]></example> 	
   </section2>	
@@ -123,11 +119,7 @@
   <section2 topic="Protocol Namespaces" anchor="registrar-ns">
     <p>This specification defines the following XML namespaces:</p>
     <ul>
-      <li>urn:xmpp:http:online-meetings:0</li>
-      <li>urn:xmpp:http:online-meetings:initiate:0</li>
-      <li>urn:xmpp:http:online-meetings:invite:0</li>
-      <li>urn:xmpp:http:online-meetings#jitsi</li>
-      <li>urn:xmpp:http:online-meetings#galene</li>
+      <li>urn:xmpp:sdp:1</li>
     </ul>
     <p>Upon advancement of this specification from a status of Experimental to a status of Draft, the &REGISTRAR; shall add the foregoing namespace to the registry located at &NAMESPACES;, as described in Section 4 of &xep0053;.</p>
   </section2>
