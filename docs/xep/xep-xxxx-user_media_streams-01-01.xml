@@ -6,8 +6,8 @@
 <?xml-stylesheet type='text/xsl' href='xep.xsl'?>
 <xep xmlns="">
 <header>
-  <title>User Media Streams Publish-Subscribe</title>
-  <abstract>This specification defines a payload format for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is typically transported using the personal eventing protocol, a profile of XMPP publish-subscribe specified in XEP-0163.</abstract>
+  <title>User Media Streams</title>
+  <abstract>This specification defines a payload format for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is transported using IQ stanzas and PEP notifications.</abstract>
   <legal>
     <copyright>This XMPP Extension Protocol is copyright © 1999 – 2023 by the <link url="https://xmpp.org/">XMPP Standards Foundation</link> (XSF).</copyright>
     <permissions>Permission is hereby granted, free of charge, to any person obtaining a copy of this specification (the "Specification"), to make use of the Specification without restriction, including without limitation the rights to implement the Specification in a software program, deploy the Specification in a network service, and copy, modify, merge, publish, translate, distribute, sublicense, or sell copies of the Specification, and to permit persons to whom the Specification is furnished to do so, subject to the condition that the foregoing copyright notice and this permission notice shall be included in all copies or substantial portions of the Specification. Unless separate permission is granted, modified works that are redistributed shall not contain misleading information regarding the authors, title, number, or publisher of the Specification, and shall not claim endorsement of the modified works by the authors, any organization or project to which the authors belong, or the XMPP Standards Foundation.</permissions>
@@ -23,7 +23,7 @@
   <dependencies/>
   <supersedes/>
   <supersededby/>
-  <shortname>xxxx-user_media_pubsub</shortname>
+  <shortname>user_media_streams</shortname>
   <author>
     <firstname>Dele</firstname>
     <surname>Olajide</surname>
@@ -44,31 +44,26 @@
 <section1 topic='Introduction' anchor='intro'> 
   <p>While WebRTC specifies the usage of SDPs [RFC8866] and an Offer/Answer model [RFC3264] for creating connections, WebRTC does not define the precise signaling protocols over which SDPs should be exchanged [RFC8825]. In order to establish a WebRTC session between two WebRTC entities, a signaling protocol is usually used to exchange SDPs</p>
   <p>With HTTP/S applications, WHIP and WHEP have been proposed as simple protocols to ingress and egress media streams using WebRTC.</p>
-  <p>This specification defines a payload format for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is typically transported using the personal eventing protocol, a profile of XMPP publish-subscribe specified in XEP-0163 which maps directly to WHIP and WHEP.</p>
+  <p>This specification defines a payload format for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is transported using set and get IQ stanzas which map directly to WHIP and WHEP.</p>
+  <p>The personal eventing protocol, a profile of XMPP publish-subscribe specified in XEP-0163 is used to auto-notify subscribers when media streams become available.</p>
 
   <section2 topic='User publishes media stream' anchor='publish-media-stream'>   
     <p>A sample protocol flow to ingress a media session from the client</p> 
-    <example caption='Client creates an SDP offer to send a media stream and publishes it'><![CDATA[  
+    <example caption='Client creates an SDP offer to publish a media stream'><![CDATA[  
 <iq from='juliet@capulet.lit/broadcast' id='ih28sx61' type='set'>
-  <pubsub xmlns='http://jabber.org/protocol/pubsub'>
-    <publish node='urn:xmpp:sdp:1'>
-      <item>
-        <sdp xmlns='urn:xmpp:sdp:1'>
-          SDP OFFER
-        </sdp>
-      </item>
-    </publish>
-  </pubsub>
+  <whip node='urn:xmpp:sdp:1'>
+    SDP OFFER
+  </whip>
 </iq>	
     ]]></example> 
     <example caption='The server responds with an SDP answer for the client'><![CDATA[  
 <iq to='juliet@capulet.lit/broadcast' id='ih28sx61' from='shakespeare.lit' type='result'>
-  <sdp xmlns='urn:xmpp:sdp:1'>
+  <whip xmlns='urn:xmpp:sdp:1'>
     SDP ANSWER
-  </sdp> 
+  </whip> 
 </iq>	
     ]]></example> 
-    <example caption='The server sends a user media stream notification to all subscribers with no payload'><![CDATA[  
+    <example caption='The server sends a user media stream PEP notification to all subscribers with no payload'><![CDATA[  
 <message to='any-user@capulet.lit/globe' from='juliet@capulet.lit/broadcast'>
   <event xmlns='http://jabber.org/protocol/pubsub#event'>
     <items node='urn:xmpp:sdp:1'>
@@ -83,22 +78,16 @@
     <p>A sample protocol flow to egress a user media by the client</p> 
     <example caption='Client creates an SDP offer to receive a notified user media stream'><![CDATA[ 
 <iq to='any-user@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='get'>
-    <pubsub xmlns='http://jabber.org/protocol/pubsub'>
-      <items node='urn:xmpp:sdp:1'>
-        <item id="ih28sx61">
-          <sdp xmlns='urn:xmpp:sdp:1'>
-            SDP OFFER
-          </sdp>			
-        </item>
-      </items>
-  </pubsub>
+  <whep id="ih28sx61" xmlns='urn:xmpp:sdp:1'>
+    SDP OFFER		
+  </whep>
 </iq>	
     ]]></example> 
     <example caption='The server responds with an SDP answer for the client'><![CDATA[  
 <iq to='any-user@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='result'>
-  <sdp xmlns='urn:xmpp:sdp:1'>
+  <whep xmlns='urn:xmpp:sdp:1'>
     SDP ANSWER
-  </sdp>  
+  </whep>  
 </iq>	
     ]]></example> 	
   </section2>	
