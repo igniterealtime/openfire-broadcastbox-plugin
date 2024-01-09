@@ -1,0 +1,10 @@
+.idea/
+target/
+tempdir/
+*.cmd
+classes/linux-64/web/
+classes/linux-64/.env.development
+classes/linux-64/.env.production
+classes/win-64/web/
+classes/win-64/.env.development
+classes/win-64/.env.production

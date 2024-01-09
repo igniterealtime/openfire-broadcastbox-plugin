@@ -1,0 +1,143 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE xep SYSTEM 'xep.dtd' [
+  <!ENTITY % ents SYSTEM 'xep.ent'>
+  %ents;
+  ]>
+<?xml-stylesheet type='text/xsl' href='xep.xsl'?>
+<xep xmlns="">
+<header>
+  <title>User Media Streams Publish-Subscribe using WebRTC-HTTP ingestion and egress</title>
+  <abstract>This specification defines a payload format for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is typically transported using the personal eventing protocol, a profile of XMPP publish-subscribe specified in XEP-0163.</abstract>
+  <legal>
+    <copyright>This XMPP Extension Protocol is copyright © 1999 – 2023 by the <link url="https://xmpp.org/">XMPP Standards Foundation</link> (XSF).</copyright>
+    <permissions>Permission is hereby granted, free of charge, to any person obtaining a copy of this specification (the "Specification"), to make use of the Specification without restriction, including without limitation the rights to implement the Specification in a software program, deploy the Specification in a network service, and copy, modify, merge, publish, translate, distribute, sublicense, or sell copies of the Specification, and to permit persons to whom the Specification is furnished to do so, subject to the condition that the foregoing copyright notice and this permission notice shall be included in all copies or substantial portions of the Specification. Unless separate permission is granted, modified works that are redistributed shall not contain misleading information regarding the authors, title, number, or publisher of the Specification, and shall not claim endorsement of the modified works by the authors, any organization or project to which the authors belong, or the XMPP Standards Foundation.</permissions>
+    <warranty>## NOTE WELL: This Specification is provided on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied, including, without limitation, any warranties or conditions of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE. ##</warranty>
+    <liability>In no event and under no legal theory, whether in tort (including negligence), contract, or otherwise, unless required by applicable law (such as deliberate and grossly negligent acts) or agreed to in writing, shall the XMPP Standards Foundation or any author of this Specification be liable for damages, including any direct, indirect, special, incidental, or consequential damages of any character arising from, out of, or in connection with the Specification or the implementation, deployment, or other use of the Specification (including but not limited to damages for loss of goodwill, work stoppage, computer failure or malfunction, or any and all other commercial damages or losses), even if the XMPP Standards Foundation or such author has been advised of the possibility of such damages.</liability>
+    <conformance>This XMPP Extension Protocol has been contributed in full conformance with the XSF's Intellectual Property Rights Policy (a copy of which can be found at &lt;<link url="https://xmpp.org/about/xsf/ipr-policy">https://xmpp.org/about/xsf/ipr-policy</link>&gt; or obtained by writing to XMPP Standards Foundation, P.O. Box 787, Parker, CO 80134 USA).</conformance>
+  </legal>
+  <number>XXXX</number>
+  <status>ProtoXEP</status>
+  <type>Standards Track</type>
+  <sig>Standards</sig>
+  <approver>Council</approver>
+  <dependencies/>
+  <supersedes/>
+  <supersededby/>
+  <shortname>xxxx-user_media_pubsub</shortname>
+  <author>
+    <firstname>Dele</firstname>
+    <surname>Olajide</surname>
+    <email>dele@olajide.net</email>
+    <jid>dele.olajide@igniterealtime.org</jid>
+  </author>
+  <revision>  
+    <version>0.0.1</version>
+    <date>2023-12-31</date>
+    <initials>do</initials>
+    <remark>
+      <ul>
+        <li>Initial version.</li>
+      </ul>
+    </remark>
+  </revision>
+</header>
+<section1 topic='Introduction' anchor='intro'> 
+  <p>An SFU (selective forwarding unit) is capable of receiving multiple media streams and then decides which of these media streams should be sent to which participants.	In the SFU architecture, every participant sends their media stream to a centralized selective forwarding unit (SFU) and receives streams from all other participants via the same SFU.</p>
+  <p>The purpose of this protocol extension is to provide a generic specification of how an XMPP client can communicate in-band with an SFU via simple IQ stanzas</p>
+</section1> 
+
+<section1 topic='Requirements' anchor='reqs'> 
+  <p>This document addresses the following requirements:</p> 
+  <ul> 
+    <li><p>Provide a WebRTC XMPP ingress protocol (WXIP) like WHIP <note>WebRTC-HTTP ingestion protocol&lt;<link url="https://github.com/wish-wg/webrtc-http-ingest-protocol">https://github.com/wish-wg/webrtc-http-ingest-protocol</link>&gt;.</note> that can be used to publish a WebRTC media stream to an SFU</p></li>	
+    <li><p>Provide a WebRTC XMPP access protocol (WXAP) like WHAP <note>WebRTC-HTTP access protocol&lt;<link url="https://github.com/x186k/webrtc-http-access-protocol/blob/master/draft-elliott-whap.txt">https://github.com/x186k/webrtc-http-access-protocol/blob/master/draft-elliott-whap.txt</link>&gt;.</note> that can be used to subscribe and recieve WebRTC media streams from an SFU.</p></li>	
+  </ul> 
+</section1> 
+
+<section1 topic='WXIP and WXAP Protocols' anchor='wxip-wxap-protocol'> 
+<p>While WebRTC specifies the usage of SDPs [RFC8866] and an Offer/Answer model [RFC3264] for creating connections, WebRTC does not define the precise signaling protocols over which SDPs should be exchanged [RFC8825]. In order to establish a WebRTC session between two WebRTC entities, a signaling protocol is usually used to exchange SDPs</p>
+<p>With HTTP/S applications, WHIP and WHAP have been proposed as simple protocols to ingress and egress media streams to and from an SFU respectfully. WXIP and WXAP are the XMPP equivalent. Like WHIP and WHAP, WXIP and WXIP are needed for both ingest/egress in traditional media platforms and ingest in WebRTC end-to-end platforms with the lowest possible latency for XMPP clients offering media real-time communication solutions.</p>
+<p>In order to support SFUs that host multiple conferences, a conference id can be specified in the requests. Typically, this may be an XMPP MUC room associated with the SFU conference.</p>
+
+  <section2 topic='WXIP Offer request to SFU' anchor='wxip-offer'>   
+    <p>A sample protocol flow to ingress a media session from the client to the SFU</p> 
+    <example caption='Client creates an SDP offer and sends to SFU'><![CDATA[  
+<iq from='any-user@shakespeare.lit/globe' id='ih28sx61' to='shakespeare.lit' type='set'>
+  <c2s xmlns="urn:xmpp:sfu:wxip:0" id="movies@muc.shakespeare.lit">
+	SDP OFFER....
+  </c2s>
+</iq>	
+    ]]></example> 
+	<p>The SFU will create an ICE/DTLS session and the media will flow unidirectionally from the encoder/media producer (XMPP client) to the ingestion endpoint (SFU). In order to reduce complexity, no SDP renegotiation is supported, so no tracks or streams can be added or removed once the initial media offer/answer is completed.</p>
+    <example caption='The SFU responds with an SDP answer for the client'><![CDATA[  
+<iq to='any-user@shakespeare.lit/globe' id='ih28sx61' from='shakespeare.lit' type='result'>
+  <s2c xmlns="urn:xmpp:sfu:wxip:0" id="movies@muc.shakespeare.lit">
+	SDP ANSWER....
+  </s2c>
+</iq>	
+    ]]></example> 	
+  </section2>
+  
+  <section2 topic='WXAP Subscribe request to SFU' anchor='wxap-subscribe'>   
+    <p>A sample protocol flow to egress remote media sessions from the SFU to the client</p> 
+    <example caption='Client subscribes to a remote media stream from SFU'><![CDATA[
+<iq from='any-user@shakespeare.lit/globe' id='ih28sx61' to='shakespeare.lit' type='set'>
+  <c2s xmlns="urn:xmpp:sfu:wxap:0" type="subscribe" id="movies@muc.shakespeare.lit" />
+</iq>	
+    ]]></example> 	
+	<p>SFU creates SDP offer for the remote media strea and sends to the client</p>
+    <example caption='Remote stream pushed from SFU to client'><![CDATA[  
+<iq to='any-user@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='set'>
+  <s2c xmlns="urn:xmpp:sfu:wxap:0" id="movies@muc.shakespeare.lit">
+	SDP OFFER....
+  </s2c>
+</iq>	
+    ]]></example> 
+    <example caption='The client responds with an SDP answer for the SFU'><![CDATA[  
+<iq from='any-user@shakespeare.lit/globe' id='6338Vbrhrl' to='shakespeare.lit' type='result'>
+  <c2s xmlns="urn:xmpp:sfu:wxap:0" id="movies@muc.shakespeare.lit">
+	SDP ANSWER....
+  </c2s>
+</iq>	
+    ]]></example> 	
+  </section2>	
+</section1> 
+
+<section1 topic="Implementation Notes" anchor="impl">
+  <p>The server SHOULD choose an appropriate timeout for the validity of the URL. Since there is no reason for a client to wait between requesting the URL and joining the meeting via the URL before dispatching invitations, relatively low timeout values of around 300s are RECOMMENDED.</p>
+</section1>
+<section1 topic="Security Considerations" anchor="security">
+  <section2 topic="General" anchor="general">
+    <ul>
+      <li>Service implementors SHOULD use long randomized parts in their URLs making it impossible to guess the location of arbitrary meeting url.</li>
+      <li>Implementors should keep in mind, that without additional end-to-end-encryption, online meetings may not be secure. Client implementors are advised to either use this only for semi public meetings (for example meetings hosted on a public MUC) or implement appropriate end-to-end encryption.</li>
+      <li>Joining an HTTP Online Meeting will leak the client’s IP address to the HTTP service. The HTTP service might not be the same service as the XMPP service the client is currently connected to.</li>
+  </ul>
+  </section2>
+</section1>
+<section1 topic="IANA Considerations" anchor="iana">
+  <p>This document requires no interaction with the &IANA;</p>
+</section1>
+<section1 topic="XMPP Registrar Considerations" anchor="registrar">
+  <section2 topic="Protocol Namespaces" anchor="registrar-ns">
+    <p>This specification defines the following XML namespaces:</p>
+    <ul>
+      <li>urn:xmpp:http:online-meetings:0</li>
+      <li>urn:xmpp:http:online-meetings:initiate:0</li>
+      <li>urn:xmpp:http:online-meetings:invite:0</li>
+      <li>urn:xmpp:http:online-meetings#jitsi</li>
+      <li>urn:xmpp:http:online-meetings#galene</li>
+    </ul>
+    <p>Upon advancement of this specification from a status of Experimental to a status of Draft, the &REGISTRAR; shall add the foregoing namespace to the registry located at &NAMESPACES;, as described in Section 4 of &xep0053;.</p>
+  </section2>
+  <section2 topic="Meeting Serviced Type Registry" anchor="registrar-type">
+    <p>The XMPP Registrar maintains a registry of Meeting provider types at TBD.</p>
+  </section2>
+</section1>
+<section1 topic="XML Schema" anchor="schema">
+  <code><![CDATA[
+<xml version="1.0" encoding="utf8">
+<!-- TBD -->
+]]></code>
+</section1>
+</xep>
