@@ -50,15 +50,15 @@
     <p>A sample protocol flow to ingress a media session from the client</p> 
     <example caption='Client creates an SDP offer to send a media stream and publishes it'><![CDATA[  
 <iq from='juliet@capulet.lit/broadcast' id='ih28sx61' type='set'>
-	<pubsub xmlns='http://jabber.org/protocol/pubsub'>
-		<publish node='urn:xmpp:sdp:1'>
-			<item>
-				<sdp xmlns='urn:xmpp:sdp:1'>
-					SDP OFFER
-				</sdp>
-			</item>
-		</publish>
-	</pubsub>
+  <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+    <publish node='urn:xmpp:sdp:1'>
+      <item>
+        <sdp xmlns='urn:xmpp:sdp:1'>
+          SDP OFFER
+        </sdp>
+      </item>
+    </publish>
+  </pubsub>
 </iq>	
     ]]></example> 
     <example caption='The server responds with an SDP answer for the client'><![CDATA[  
@@ -70,11 +70,11 @@
     ]]></example> 
     <example caption='The server sends a user media stream notification to all subscribers with no payload'><![CDATA[  
 <message to='any-user@capulet.lit/globe' from='juliet@capulet.lit/broadcast'>
-	<event xmlns='http://jabber.org/protocol/pubsub#event'>
-		<items node='urn:xmpp:sdp:1'>
-			<item id="ih28sx61" />
-		</items>
-	</event>
+  <event xmlns='http://jabber.org/protocol/pubsub#event'>
+    <items node='urn:xmpp:sdp:1'>
+      <item id="ih28sx61" />
+    </items>
+  </event>
 </message>	
     ]]></example> 	
   </section2>
@@ -83,15 +83,15 @@
     <p>A sample protocol flow to egress a user media by the client</p> 
     <example caption='Client creates an SDP offer to receive a notified user media stream'><![CDATA[ 
 <iq to='any-user@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='get'>
-	<pubsub xmlns='http://jabber.org/protocol/pubsub'>
-		<items node='urn:xmpp:sdp:1'>
-			<item id="ih28sx61">
-				<sdp xmlns='urn:xmpp:sdp:1'>
-					SDP OFFER
-				</sdp>			
-			</item>
-		</items>
-	</pubsub>
+    <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+      <items node='urn:xmpp:sdp:1'>
+        <item id="ih28sx61">
+          <sdp xmlns='urn:xmpp:sdp:1'>
+            SDP OFFER
+          </sdp>			
+        </item>
+      </items>
+  </pubsub>
 </iq>	
     ]]></example> 
     <example caption='The server responds with an SDP answer for the client'><![CDATA[  
