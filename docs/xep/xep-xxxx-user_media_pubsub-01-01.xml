@@ -6,7 +6,7 @@
 <?xml-stylesheet type='text/xsl' href='xep.xsl'?>
 <xep xmlns="">
 <header>
-  <title>User Media Streams Publish-Subscribe using WebRTC-HTTP ingestion and egress</title>
+  <title>User Media Streams Publish-Subscribe</title>
   <abstract>This specification defines a payload format for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is typically transported using the personal eventing protocol, a profile of XMPP publish-subscribe specified in XEP-0163.</abstract>
   <legal>
     <copyright>This XMPP Extension Protocol is copyright © 1999 – 2023 by the <link url="https://xmpp.org/">XMPP Standards Foundation</link> (XSF).</copyright>
@@ -42,77 +42,80 @@
   </revision>
 </header>
 <section1 topic='Introduction' anchor='intro'> 
-  <p>An SFU (selective forwarding unit) is capable of receiving multiple media streams and then decides which of these media streams should be sent to which participants.	In the SFU architecture, every participant sends their media stream to a centralized selective forwarding unit (SFU) and receives streams from all other participants via the same SFU.</p>
-  <p>The purpose of this protocol extension is to provide a generic specification of how an XMPP client can communicate in-band with an SFU via simple IQ stanzas</p>
-</section1> 
+  <p>While WebRTC specifies the usage of SDPs [RFC8866] and an Offer/Answer model [RFC3264] for creating connections, WebRTC does not define the precise signaling protocols over which SDPs should be exchanged [RFC8825]. In order to establish a WebRTC session between two WebRTC entities, a signaling protocol is usually used to exchange SDPs</p>
+  <p>With HTTP/S applications, WHIP and WHEP have been proposed as simple protocols to ingress and egress media streams using WebRTC. This specification defines a payload format for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is typically transported using the personal eventing protocol, a profile of XMPP publish-subscribe specified in XEP-0163 which maps directly to WHIP and WHEP.</p>
 
+</section1> 
 <section1 topic='Requirements' anchor='reqs'> 
   <p>This document addresses the following requirements:</p> 
   <ul> 
     <li><p>Provide a WebRTC XMPP ingress protocol (WXIP) like WHIP <note>WebRTC-HTTP ingestion protocol&lt;<link url="https://github.com/wish-wg/webrtc-http-ingest-protocol">https://github.com/wish-wg/webrtc-http-ingest-protocol</link>&gt;.</note> that can be used to publish a WebRTC media stream to an SFU</p></li>	
     <li><p>Provide a WebRTC XMPP access protocol (WXAP) like WHAP <note>WebRTC-HTTP access protocol&lt;<link url="https://github.com/x186k/webrtc-http-access-protocol/blob/master/draft-elliott-whap.txt">https://github.com/x186k/webrtc-http-access-protocol/blob/master/draft-elliott-whap.txt</link>&gt;.</note> that can be used to subscribe and recieve WebRTC media streams from an SFU.</p></li>	
   </ul> 
-</section1> 
 
-<section1 topic='WXIP and WXAP Protocols' anchor='wxip-wxap-protocol'> 
-<p>While WebRTC specifies the usage of SDPs [RFC8866] and an Offer/Answer model [RFC3264] for creating connections, WebRTC does not define the precise signaling protocols over which SDPs should be exchanged [RFC8825]. In order to establish a WebRTC session between two WebRTC entities, a signaling protocol is usually used to exchange SDPs</p>
-<p>With HTTP/S applications, WHIP and WHAP have been proposed as simple protocols to ingress and egress media streams to and from an SFU respectfully. WXIP and WXAP are the XMPP equivalent. Like WHIP and WHAP, WXIP and WXIP are needed for both ingest/egress in traditional media platforms and ingest in WebRTC end-to-end platforms with the lowest possible latency for XMPP clients offering media real-time communication solutions.</p>
-<p>In order to support SFUs that host multiple conferences, a conference id can be specified in the requests. Typically, this may be an XMPP MUC room associated with the SFU conference.</p>
-
-  <section2 topic='WXIP Offer request to SFU' anchor='wxip-offer'>   
-    <p>A sample protocol flow to ingress a media session from the client to the SFU</p> 
-    <example caption='Client creates an SDP offer and sends to SFU'><![CDATA[  
-<iq from='any-user@shakespeare.lit/globe' id='ih28sx61' to='shakespeare.lit' type='set'>
-  <c2s xmlns="urn:xmpp:sfu:wxip:0" id="movies@muc.shakespeare.lit">
-	SDP OFFER....
-  </c2s>
+  <section2 topic='User publishes media stream' anchor='publish-media-stream'>   
+    <p>A sample protocol flow to ingress a media session from the client</p> 
+    <example caption='Client creates an SDP offer to send a media stream and publishes it'><![CDATA[  
+<iq from='juliet@capulet.lit/broadcast' id='ih28sx61' type='set'>
+  <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+    <publish node='urn:xmpp:sdp:1'>
+      <item>
+        <sdp xmlns='urn:xmpp:sdp:1'>
+			SDP OFFER
+        </sdp>
+      </item>
+    </publish>
+  </pubsub>
 </iq>	
     ]]></example> 
-	<p>The SFU will create an ICE/DTLS session and the media will flow unidirectionally from the encoder/media producer (XMPP client) to the ingestion endpoint (SFU). In order to reduce complexity, no SDP renegotiation is supported, so no tracks or streams can be added or removed once the initial media offer/answer is completed.</p>
-    <example caption='The SFU responds with an SDP answer for the client'><![CDATA[  
-<iq to='any-user@shakespeare.lit/globe' id='ih28sx61' from='shakespeare.lit' type='result'>
-  <s2c xmlns="urn:xmpp:sfu:wxip:0" id="movies@muc.shakespeare.lit">
-	SDP ANSWER....
-  </s2c>
+    <example caption='The server responds with an SDP answer for the client'><![CDATA[  
+<iq to='juliet@capulet.lit/broadcast' id='ih28sx61' from='shakespeare.lit' type='result'>
+	<sdp xmlns='urn:xmpp:sdp:1'>
+		SDP ANSWER
+	</sdp>
 </iq>	
+    ]]></example> 
+    <example caption='The server sends a user media stream notification to all subscribers with no payload'><![CDATA[  
+<message to='any-user@capulet.lit/globe' from='juliet@capulet.lit/broadcast'>
+  <event xmlns='http://jabber.org/protocol/pubsub#event'>
+    <items node='urn:xmpp:sdp:1'>
+      <item id="ih28sx61" />
+	</items>
+</message>	
     ]]></example> 	
   </section2>
   
-  <section2 topic='WXAP Subscribe request to SFU' anchor='wxap-subscribe'>   
-    <p>A sample protocol flow to egress remote media sessions from the SFU to the client</p> 
-    <example caption='Client subscribes to a remote media stream from SFU'><![CDATA[
-<iq from='any-user@shakespeare.lit/globe' id='ih28sx61' to='shakespeare.lit' type='set'>
-  <c2s xmlns="urn:xmpp:sfu:wxap:0" type="subscribe" id="movies@muc.shakespeare.lit" />
-</iq>	
-    ]]></example> 	
-	<p>SFU creates SDP offer for the remote media strea and sends to the client</p>
-    <example caption='Remote stream pushed from SFU to client'><![CDATA[  
-<iq to='any-user@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='set'>
-  <s2c xmlns="urn:xmpp:sfu:wxap:0" id="movies@muc.shakespeare.lit">
-	SDP OFFER....
-  </s2c>
+  <section2 topic='Subscriber request for user media stream' anchor='subscribe-media-stream'>   
+    <p>A sample protocol flow to egress a user media by the client</p> 
+    <example caption='Client creates an SDP offer to receive a notified user media stream'><![CDATA[ 
+<iq to='any-user@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='get'>
+  <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+    <items node='urn:xmpp:sdp:1'>
+      <item id="ih28sx61" />
+	</items>
+  </pubsub>
 </iq>	
     ]]></example> 
-    <example caption='The client responds with an SDP answer for the SFU'><![CDATA[  
-<iq from='any-user@shakespeare.lit/globe' id='6338Vbrhrl' to='shakespeare.lit' type='result'>
-  <c2s xmlns="urn:xmpp:sfu:wxap:0" id="movies@muc.shakespeare.lit">
-	SDP ANSWER....
-  </c2s>
+    <example caption='The server responds with an SDP answer for the client'><![CDATA[  
+<iq to='any-user@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='result'>
+    <items node='urn:xmpp:sdp:1'>
+      <item id="ih28sx61">
+		<sdp xmlns='urn:xmpp:sdp:1'>
+			SDP ANSWER
+		</sdp> 
+	  </item>
+	</items>
 </iq>	
     ]]></example> 	
   </section2>	
 </section1> 
-
 <section1 topic="Implementation Notes" anchor="impl">
-  <p>The server SHOULD choose an appropriate timeout for the validity of the URL. Since there is no reason for a client to wait between requesting the URL and joining the meeting via the URL before dispatching invitations, relatively low timeout values of around 300s are RECOMMENDED.</p>
+  <p></p>
 </section1>
 <section1 topic="Security Considerations" anchor="security">
   <section2 topic="General" anchor="general">
-    <ul>
-      <li>Service implementors SHOULD use long randomized parts in their URLs making it impossible to guess the location of arbitrary meeting url.</li>
-      <li>Implementors should keep in mind, that without additional end-to-end-encryption, online meetings may not be secure. Client implementors are advised to either use this only for semi public meetings (for example meetings hosted on a public MUC) or implement appropriate end-to-end encryption.</li>
-      <li>Joining an HTTP Online Meeting will leak the client’s IP address to the HTTP service. The HTTP service might not be the same service as the XMPP service the client is currently connected to.</li>
-  </ul>
+   <ul>
+   </ul>
   </section2>
 </section1>
 <section1 topic="IANA Considerations" anchor="iana">
