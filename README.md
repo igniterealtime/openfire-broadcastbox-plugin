@@ -1,6 +1,7 @@
 ## Broadcast Box
 Media Streams Publish-Subscribe for Openfire using Broadcast Box.
-This openfire plugin uses [Broadcast Box](https://github.com/Glimesh/broadcast-box) to implement a payload format for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is typically transported using the personal eventing protocol, a profile of XMPP publish-subscribe specified in XEP-0163.
+
+This openfire plugin uses [Broadcast Box](https://github.com/Glimesh/broadcast-box) to implement a [payload format for communicating user media streams using WebRTC-based ingestion/egress](https://igniterealtime.github.io/openfire-broadcastbox-plugin/xep). The WebRTC SDP payload format is typically transported using the personal eventing protocol, a profile of XMPP publish-subscribe specified in XEP-0163.
 
 ## CI Build Status
 
