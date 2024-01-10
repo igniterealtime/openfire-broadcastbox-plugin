@@ -82,7 +82,7 @@
 </section1>
 <section1 topic="User Media Streams workflow" anchor="workflow">
   <section2 topic='User publishes media stream' anchor='publish-media-stream'>   
-    <p>A sample protocol flow to ingress a media session from the client</p> 
+    <p>A sample protocol flow to ingest a media session from the client</p> 
     <example caption='Client creates an SDP offer to publish a media stream'><![CDATA[  
 <iq from='juliet@capulet.lit/broadcast' id='ih28sx61' type='set'>
   <whip node='urn:xmpp:sdp:0'>
