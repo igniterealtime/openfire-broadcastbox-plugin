@@ -7,7 +7,7 @@
 <xep xmlns="">
 <header>
   <title>User Media Streams</title>
-  <abstract>This specification defines a payload format for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is transported using IQ stanzas and PEP notifications.</abstract>
+  <abstract>This specification defines a payload format for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is transported using IQ stanzas and Personal Eventing Protocol (PEP) notifications.</abstract>
   <legal>
     <copyright>This XMPP Extension Protocol is copyright © 1999 – 2023 by the <link url="https://xmpp.org/">XMPP Standards Foundation</link> (XSF).</copyright>
     <permissions>Permission is hereby granted, free of charge, to any person obtaining a copy of this specification (the "Specification"), to make use of the Specification without restriction, including without limitation the rights to implement the Specification in a software program, deploy the Specification in a network service, and copy, modify, merge, publish, translate, distribute, sublicense, or sell copies of the Specification, and to permit persons to whom the Specification is furnished to do so, subject to the condition that the foregoing copyright notice and this permission notice shall be included in all copies or substantial portions of the Specification. Unless separate permission is granted, modified works that are redistributed shall not contain misleading information regarding the authors, title, number, or publisher of the Specification, and shall not claim endorsement of the modified works by the authors, any organization or project to which the authors belong, or the XMPP Standards Foundation.</permissions>
@@ -45,7 +45,7 @@
   <p>While WebRTC specifies the usage of SDPs [RFC8866] and an Offer/Answer model [RFC3264] for creating connections, WebRTC does not define the precise signaling protocols over which SDPs should be exchanged [RFC8825]. In order to establish a WebRTC session between two WebRTC entities, a signaling protocol is usually used to exchange SDPs</p>
   <p>With HTTP/S applications, WHIP and WHEP have been proposed as simple protocols to ingest and egress media streams using WebRTC.</p>
   <p>This specification defines a payload format for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is transported using set and get IQ stanzas which map directly to WHIP and WHEP.</p>
-  <p>The personal eventing protocol, a profile of XMPP publish-subscribe specified in XEP-0163 is used to auto-notify subscribers when media streams become available.</p>
+  <p>The personal eventing protocol, a profile of XMPP publish-subscribe specified in &xep0163; is used to auto-notify subscribers when media streams become available.</p>
 </section1>
 <section1 topic="Requirements" anchor="reqs">
   <ul>
@@ -56,7 +56,7 @@
 </section1>
 <section1 topic="Discovering Support" anchor="disco">
   <section2 topic="Discovery Query" anchor="disco-initiation">
-    <p>The server advertises support for WebRTC-based ingestion/egress, as specified by this protocol, by including the "urn:xmpp:sdp:whip:0" namespace, as well as "urn:xmpp:sdp:whep:0" namespaces in its service discovery information features as specified in <span class="ref"><link url="https://xmpp.org/extensions/xep-0030.html">Service Discovery (XEP-0030)</link></span> <note>XEP-0030: Service Discovery &lt;<link url="https://xmpp.org/extensions/xep-0030.html">https://xmpp.org/extensions/xep-0030.html</link>&gt;.</note> or section 6.3 of <span class="ref"><link url="https://xmpp.org/extensions/xep-0115.html">Entity Capabilities (XEP-0115)</link></span> <note>XEP-0115: Entity Capabilities &lt;<link url="https://xmpp.org/extensions/xep-0115.html">https://xmpp.org/extensions/xep-0115.html</link>&gt;.</note>.</p>
+    <p>The server advertises support for WebRTC-based ingestion/egress, as specified by this protocol, by including the "urn:xmpp:sdp:whip:0" namespace, as well as "urn:xmpp:sdp:whep:0" namespaces in its service discovery information features as specified in in &xep0030; or section 6.3 of &xep0115;.</p>
     <p>If the server can push ice candidates patches from the WebRTC-based ingestion/egress, it SHOULD include 'urn:xmpp:sdp:ice:0' namespace. If the WebRTC-based egress supports server-sent events (SSE), then it SHOULD also include the 'urn:xmpp:sdp:whep:sse:0' namespace. </p>
     <example caption="Client sends service discovery request to server"><![CDATA[
 <iq to='shakespeare.lit'
