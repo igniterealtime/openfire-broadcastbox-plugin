@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2017 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 package org.ifsoft.broadcastbox.openfire;
 
 import java.io.*;
@@ -66,7 +82,9 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
     private ExecutorService executor;
     private WebAppContext jspService;
     private ServletContextHandler webContext;	
-    private Cache muc_properties;		
+    private Cache muc_properties;	
+    private WhipIQHandler whipIQHandler;	
+    private WhepIQHandler whepIQHandler;
 	
     public static BroadcastBox self;	
 
@@ -78,7 +96,9 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
             if (executor != null)  executor.shutdown();
             if (broadcastboxThread != null) broadcastboxThread.destory();
             if (jspService != null) HttpBindManager.getInstance().removeJettyHandler(jspService);
-            if (webContext != null) HttpBindManager.getInstance().removeJettyHandler(webContext);			
+            if (webContext != null) HttpBindManager.getInstance().removeJettyHandler(webContext);
+			if (whipIQHandler != null) whipIQHandler.stopHandler();			
+			if (whepIQHandler != null) whepIQHandler.stopHandler();				
 
             Log.info("broadcastbox terminated");
         }
@@ -92,6 +112,19 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
 		
         PropertyEventDispatcher.addListener(this);
         MUCEventDispatcher.addListener(this);
+
+		whipIQHandler = new WhipIQHandler();
+		whipIQHandler.startHandler();		
+		XMPPServer.getInstance().getIQRouter().addHandler(whipIQHandler);	
+		XMPPServer.getInstance().getIQDiscoInfoHandler().addServerFeature("urn:xmpp:whip:0");				
+		XMPPServer.getInstance().getIQDiscoInfoHandler().addServerFeature("urn:xmpp:whip:ice:0");
+		
+		whepIQHandler = new WhepIQHandler();
+		whepIQHandler.startHandler();		
+		XMPPServer.getInstance().getIQRouter().addHandler(whepIQHandler);	
+		XMPPServer.getInstance().getIQDiscoInfoHandler().addServerFeature("urn:xmpp:whep:0");				
+		XMPPServer.getInstance().getIQDiscoInfoHandler().addServerFeature("urn:xmpp:whep:ice:0");
+		XMPPServer.getInstance().getIQDiscoInfoHandler().addServerFeature("urn:xmpp:whep:ext:0");		
 		
         checkNatives(pluginDirectory);
         executor = Executors.newCachedThreadPool();
@@ -180,7 +213,6 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
 			String webUrl = "http://" + ipaddr + ":" + tcpPort;
 			
 			Engine.environment.put("APP_ENV", "production");
-			Engine.environment.put("REACT_APP_API_PATH", "/broadcastbox/api");
 			Engine.environment.put("HTTP_ADDRESS", ipaddr + ":" + tcpPort);
 			Engine.environment.put("INTERFACE_FILTER", ipaddr);
 			Engine.environment.put("UDP_MUX_PORT_WHEP", udpPort);

@@ -87,7 +87,7 @@
     <p>A sample protocol flow to ingest a media session from the client</p> 
     <example caption='Client creates a WHIP SDP offer to publish a media stream'><![CDATA[  
 <iq from='juliet@capulet.lit/broadcast' id='ih28sx61' type='set'>
-  <whip node='urn:xmpp:whip:0'>
+  <whip xmlns='urn:xmpp:whip:0'>
     <sdp>
 	  ...... SDP OFFER
     </sdp>
@@ -195,8 +195,8 @@
       <li>urn:xmpp:whip:0</li>
       <li>urn:xmpp:whip:ice:0</li> 	  
       <li>urn:xmpp:whep:0</li>
-      <li>urn:xmpp:whep:ext:0</li>
-      <li>urn:xmpp:whep:ice:0</li>      
+      <li>urn:xmpp:whep:ice:0</li>  	  
+      <li>urn:xmpp:whep:ext:0</li>    
     </ul>
     <p>Upon advancement of this specification from a status of Experimental to a status of Draft, the &REGISTRAR; shall add the foregoing namespace to the registry located at &NAMESPACES;, as described in Section 4 of &xep0053;.</p>
   </section2>
