@@ -51,13 +51,14 @@
   <ul>
     <li>Be as easy to implement as possible. This is grounded on the idea that most programming languages already have HTTP libraries available.</li>
     <li>Usable with WebRTC-based broadcasting providers that have no XMPP integration.</li>
+    <li>Usable with XMPP client applications that may have no HTTP/S access to the WebRTC-based ingestion/egress service.</li>	
     <li>Anyone who knows the WHIP and WHEP REST Endpoints SHOULD be able to access it as well.</li>
   </ul>
 </section1>
 <section1 topic="Discovering Support" anchor="disco">
   <section2 topic="Discovery Query" anchor="disco-initiation">
-    <p>The server advertises support for WebRTC-based ingestion/egress, as specified by this protocol, by including the "urn:xmpp:sdp:whip:0" namespace, as well as "urn:xmpp:sdp:whep:0" namespaces in its service discovery information features as specified in in &xep0030; or section 6.3 of &xep0115;.</p>
-    <p>If the server can push ice candidates patches from the WebRTC-based ingestion/egress, it SHOULD include 'urn:xmpp:sdp:ice:0' namespace. If the WebRTC-based egress supports server-sent events (SSE), then it SHOULD also include the 'urn:xmpp:sdp:whep:sse:0' namespace. </p>
+    <p>The server advertises support for WebRTC-based ingestion/egress, as specified by this protocol, by including the "urn:xmpp:whip:0" namespace, as well as "urn:xmpp:whep:0" namespaces in its service discovery information features as specified in in &xep0030;.</p>
+    <p>If the server can push ice candidates patches from the WebRTC-based ingestion/egress, it SHOULD include 'urn:xmpp:whip:ice:0' and 'urn:xmpp:whep:ice:0' namespaces. If the WebRTC-based egress supports extensions, then it SHOULD also include the 'urn:xmpp:whep:ext:0' namespace. </p>
     <example caption="Client sends service discovery request to server"><![CDATA[
 <iq to='shakespeare.lit'
     from='juliet@capulet.lit/broadcast'
@@ -65,42 +66,56 @@
     type='get'>
   <query xmlns='http://jabber.org/protocol/disco#info'/>
 </iq>]]></example>
-    <example caption="Server replies to service discovery request and reports capability for WebRTC-based ingestion, egress, ice candidate trickles and server sent events"><![CDATA[
+    <example caption="Server replies to service discovery request and reports capability for WebRTC-based ingestion, egress, extensions and ice candidate trickles"><![CDATA[
 <iq from='shakespeare.lit'
     to='juliet@capulet.lit/broadcast'
     id='disco_01'
     type='result'>
   <query xmlns='http://jabber.org/protocol/disco#info'>
     <identity category='server' type='im' name='Openfire Server'/>
-    <feature var='urn:xmpp:sdp:whip:0'/>
-    <feature var='urn:xmpp:sdp:whep:0'/>  
-    <feature var='urn:xmpp:sdp:whep:sse:0'/>
-    <feature var='urn:xmpp:sdp:ice:0'/>      
+    <feature var='urn:xmpp:whip:0'/>
+    <feature var='urn:xmpp:whip:ice:0'/>  	
+    <feature var='urn:xmpp:whep:0'/>  
+    <feature var='urn:xmpp:whep:ice:0'/>  
+    <feature var='urn:xmpp:whep:ext:0'/>    
   </query>
 </iq>]]></example>
   </section2>
 </section1>
-<section1 topic="User Media Streams workflow" anchor="workflow">
+<section1 topic="User Media Streams Workflow" anchor="workflow">
   <section2 topic='User publishes media stream' anchor='publish-media-stream'>   
     <p>A sample protocol flow to ingest a media session from the client</p> 
     <example caption='Client creates a WHIP SDP offer to publish a media stream'><![CDATA[  
 <iq from='juliet@capulet.lit/broadcast' id='ih28sx61' type='set'>
-  <whip node='urn:xmpp:sdp:0'>
-    SDP OFFER
+  <whip node='urn:xmpp:whip:0'>
+    <sdp>
+	  ...... SDP OFFER
+    </sdp>
   </whip>
 </iq>	
     ]]></example> 
     <example caption='The server responds with a WHIP SDP answer for the client'><![CDATA[  
 <iq to='juliet@capulet.lit/broadcast' id='ih28sx61' from='shakespeare.lit' type='result'>
-  <whip xmlns='urn:xmpp:sdp:0'>
-    SDP ANSWER
+  <whip xmlns='urn:xmpp:whip:0'>
+    <sdp>  
+      ...... SDP ANSWER
+    </sdp>	
   </whip> 
 </iq>	
     ]]></example> 
+    <example caption='The server pushes a patched WHIP SDP with ICE candidates'><![CDATA[  
+<iq to='juliet@shakespeare.lit/globe' id='87645fg23' from='shakespeare.lit' type='set'>
+  <whip xmlns='urn:xmpp:whip:0'>
+    <sdp>  
+      ...... SDP PATCH
+    </sdp>	
+  </whip>   
+</iq>	
+    ]]></example> 	
     <example caption='The server sends a user media stream PEP notification with no payload to all subscribers.'><![CDATA[  
-<message to='any-user@capulet.lit/globe' from='juliet@capulet.lit/broadcast'>
+<message to='romeo@capulet.lit/globe' from='juliet@capulet.lit/broadcast'>
   <event xmlns='http://jabber.org/protocol/pubsub#event'>
-    <items node='urn:xmpp:sdp:0'>
+    <items node='urn:xmpp:whip:0'>
       <item id="ih28sx61" />
     </items>
   </event>
@@ -108,39 +123,55 @@
     ]]></example> 	
   </section2>
   
-  <section2 topic='Subscriber request for user media stream' anchor='subscribe-media-stream'>   
+  <section2 topic='Subscriber requests for user media stream' anchor='subscribe-media-stream'>   
     <p>A sample protocol flow to egress a user media by the client</p> 
     <example caption='Client creates an WHEP SDP offer to receive a notified user media stream'><![CDATA[ 
-<iq to='any-user@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='get'>
-  <whep id="ih28sx61" xmlns='urn:xmpp:sdp:0'>
-    SDP OFFER		
+<iq from='romeo@shakespeare.lit/globe' id='6338Vbrhrl' type='get'>
+  <whep id="ih28sx61" xmlns='urn:xmpp:whep:0'>
+    <sdp>  
+      ...... SDP OFFER
+    </sdp>		
   </whep>
 </iq>	
     ]]></example> 
-    <example caption='The server responds with an WHEP SDP answer for the client and optional WHEP server-sent events connnection details'><![CDATA[  
-<iq to='any-user@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='result'>
-  <whep xmlns='urn:xmpp:sdp:0'
-        url='https://whep.example.org/resource/213786HF/sse/event-stream'
-        events='active","inactive","layers","viewercount'>  
-        
-    SDP ANSWER
+    <example caption='The server responds with an WHEP SDP answer for the client and the available WHEP extensions supported'><![CDATA[  
+<iq to='romeo@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='result'>
+  <whep id="ih28sx61" xmlns='urn:xmpp:whep:0'>
+    <sdp>  
+      ...... SDP ANSWER
+    </sdp>  
+    <exts>
+      <ext xmlns='urn:ietf:params:whep:ext:core:server-sent-events' />
+      <ext xmlns='urn:ietf:params:whep:ext:core:layer' />		  
+    </exts>	
   </whep>  
 </iq>	
     ]]></example>  
-    <example caption='The server pushes WHEP server-sent events'><![CDATA[  
-<iq to='any-user@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='set'>
-  <sse xmlns='urn:ietf:params:whep:ext:core:server-sent-events'>       
-    <json xmlns="urn:xmpp:json:0">
-      {"active": true, "viewercount": 3}
-    </json>
-  </sse>  
+    <example caption='The server pushes a WHEP simulcast layers server-sent event'><![CDATA[  
+<iq to='romeo@shakespeare.lit/globe' id='3947254qxcf' from='shakespeare.lit' type='set'>
+  <whep id="ih28sx61" xmlns='urn:xmpp:whep:0'>
+    <ext xmlns='urn:ietf:params:whep:ext:core:server-sent-events'>       
+	  ...... JSON PAYLOAD
+    </ext>  
+  </whep>    
 </iq>	
     ]]></example>  
-    <example caption='The server pushes a patched SDP with ICE candidates'><![CDATA[  
-<iq to='any-user@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='set'>
-  <whep xmlns='urn:xmpp:sdp:0'>
-    SDP PATCH
-  </whep>  
+    <example caption='Client selects a simulcast layer'><![CDATA[ 
+<iq from='romeo@shakespeare.lit/globe' id='8453sf42' type='set'>
+  <whep id="ih28sx61" xmlns='urn:xmpp:whep:0'>
+    <ext xmlns='urn:ietf:params:whep:ext:core:layer'>       
+	  ...... JSON PAYLOAD
+    </ext> 	
+  </whep>
+</iq>	
+    ]]></example>	
+    <example caption='The server pushes a patched WHEP SDP with ICE candidates'><![CDATA[  
+<iq to='romeo@shakespeare.lit/globe' id='54398hdg21' from='shakespeare.lit' type='set'>
+  <whep id="ih28sx61" xmlns='urn:xmpp:whep:0'>
+    <sdp>  
+      ...... SDP PATCH
+    </sdp>	
+  </whep>   
 </iq>	
     ]]></example>      
   </section2>	
@@ -161,11 +192,11 @@
   <section2 topic="Protocol Namespaces" anchor="registrar-ns">
     <p>This specification defines the following XML namespaces:</p>
     <ul>
-      <li>urn:xmpp:sdp:0</li>
-      <li>urn:xmpp:sdp:whip:0</li>
-      <li>urn:xmpp:sdp:whep:0</li>
-      <li>urn:xmpp:sdp:whep:sse:0</li>
-      <li>urn:xmpp:sdp:ice:0</li>      
+      <li>urn:xmpp:whip:0</li>
+      <li>urn:xmpp:whip:ice:0</li> 	  
+      <li>urn:xmpp:whep:0</li>
+      <li>urn:xmpp:whep:ext:0</li>
+      <li>urn:xmpp:whep:ice:0</li>      
     </ul>
     <p>Upon advancement of this specification from a status of Experimental to a status of Draft, the &REGISTRAR; shall add the foregoing namespace to the registry located at &NAMESPACES;, as described in Section 4 of &xep0053;.</p>
   </section2>
