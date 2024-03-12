@@ -35,7 +35,7 @@
 
 <%
 	String service_url = JiveGlobals.getProperty("broadcastbox.url",  plugin.getUrl());
-	String publish_url = service_url + "/broadcastbox/";	
+	String publish_url = service_url + "/";	
 %>	
 
 <% if (request.getParameter("deletesuccess") != null) { %>
@@ -73,7 +73,7 @@
 	for (int s=0; s<connections.length(); s++) {
 		JSONObject connection = connections.getJSONObject(s);
 		String roomName = connection.getString("streamKey").substring(7);
-		String subscribers = connection.getString("whepSessionsCount");
+		int subscribers = connection.getJSONArray("whepSessions").length();
 		String subscribe_url = service_url + "/" + roomName;	
 %>
 		<tr>
