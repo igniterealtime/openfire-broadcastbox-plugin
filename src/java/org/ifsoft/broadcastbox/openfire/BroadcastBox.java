@@ -219,8 +219,6 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
 			
 			if (publicIpaddr != null && !publicIpaddr.trim().equals("")) {
 				Engine.environment.put("NAT_1_TO_1_IP", publicIpaddr);
-			} else {
-				Engine.environment.put("INCLUDE_PUBLIC_IP_IN_NAT_1_TO_1_IP", "true");
 			}
             
 			Engine.environment.put("STUN_SERVERS", "stun1.l.google.com:19305|stun1.l.google.com:19302|stun4.l.google.com:19302|stun.frozenmountain.com:3478|stun.freeswitch.org:3478");			
