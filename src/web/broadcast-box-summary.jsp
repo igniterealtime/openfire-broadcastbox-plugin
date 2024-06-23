@@ -72,7 +72,7 @@
 
 	for (int s=0; s<connections.length(); s++) {
 		JSONObject connection = connections.getJSONObject(s);
-		String roomName = connection.getString("streamKey").substring(7);
+		String roomName = connection.getString("streamKey");
 		int subscribers = connection.getJSONArray("whepSessions").length();
 		String subscribe_url = service_url + "/" + roomName;	
 %>

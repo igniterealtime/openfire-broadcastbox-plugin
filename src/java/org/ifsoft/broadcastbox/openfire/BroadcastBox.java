@@ -48,6 +48,7 @@ import org.jivesoftware.util.StringUtils;
 import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.proxy.ProxyServlet;
 import org.eclipse.jetty.servlets.*;
 import org.eclipse.jetty.servlet.*;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -80,6 +81,7 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
     private String broadcastboxRoot = null;
     private ExecutorService executor;
     private WebAppContext jspService;	
+    private ServletContextHandler webContext;		
     private Cache muc_properties;	
     private WhipIQHandler whipIQHandler;	
     private WhepIQHandler whepIQHandler;
@@ -94,6 +96,7 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
             if (executor != null)  executor.shutdown();
             if (broadcastboxThread != null) broadcastboxThread.destory();
             if (jspService != null) HttpBindManager.getInstance().removeJettyHandler(jspService);
+			if (webContext != null) HttpBindManager.getInstance().removeJettyHandler(webContext);				
 			if (whipIQHandler != null) whipIQHandler.stopHandler();			
 			if (whepIQHandler != null) whepIQHandler.stopHandler();				
 
@@ -223,7 +226,16 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
             
 			Engine.environment.put("STUN_SERVERS", "stun1.l.google.com:19305|stun1.l.google.com:19302|stun4.l.google.com:19302|stun.frozenmountain.com:3478|stun.freeswitch.org:3478");			
 			
- 			broadcastboxThread = Spawn.startProcess(broadcastboxExePath, new File(broadcastboxHomePath), this);		
+ 			broadcastboxThread = Spawn.startProcess(broadcastboxExePath, new File(broadcastboxHomePath), this);	
+
+            webContext = new ServletContextHandler(null, "/", ServletContextHandler.SESSIONS);
+            webContext.setClassLoader(this.getClass().getClassLoader());			
+			ServletHolder proxyServlet = new ServletHolder(ProxyServlet.Transparent.class);
+			proxyServlet.setInitParameter("proxyTo", webUrl);
+			proxyServlet.setInitParameter("prefix", "/");
+			webContext.addServlet(proxyServlet, "/*");	
+			HttpBindManager.getInstance().addJettyHandler(webContext);
+			
             Log.info("BroadcastBox enabled " + broadcastboxExePath);
 
         } else {
