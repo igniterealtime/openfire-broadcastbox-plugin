@@ -13,7 +13,6 @@ This openfire plugin uses [Broadcast Box](https://github.com/Glimesh/broadcast-b
 ## Known Issues
 
 This version has embedded binaries for only Linux 64 and Windows 64.
-The Linux version has a known issue. Media playback is currently not working.
 
 ## Installation
 
