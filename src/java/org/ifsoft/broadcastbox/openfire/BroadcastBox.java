@@ -78,7 +78,7 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
     private XProcess broadcastboxThread = null;
     private String broadcastboxExePath = null;
     private String broadcastboxHomePath = null;
-    private String broadcastboxRoot = null;
+    private Path broadcastboxRoot = null;
     private ExecutorService executor;
     private WebAppContext jspService;	
     private ServletContextHandler webContext;		
@@ -214,7 +214,6 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
 			
 			Engine.environment.put("APP_ENV", "production");
 			Engine.environment.put("HTTP_ADDRESS", ipaddr + ":" + tcpPort);
-			Engine.environment.put("INTERFACE_FILTER", ipaddr);
 			Engine.environment.put("UDP_MUX_PORT_WHEP", udpPort);
 			Engine.environment.put("UDP_MUX_PORT_WHIP", udpPort);			
 			Engine.environment.put("UDP_MUX_PORT", udpPort);
@@ -225,7 +224,7 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
 			}
             
 			Engine.environment.put("STUN_SERVERS", "stun1.l.google.com:19305|stun1.l.google.com:19302|stun4.l.google.com:19302|stun.frozenmountain.com:3478|stun.freeswitch.org:3478");			
-			
+
  			broadcastboxThread = Spawn.startProcess(broadcastboxExePath, new File(broadcastboxHomePath), this);	
 
             webContext = new ServletContextHandler(null, "/", ServletContextHandler.SESSIONS);
@@ -246,14 +245,13 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
     private void checkNatives(File pluginDirectory)     {
         try
         {
-            broadcastboxRoot = JiveGlobals.getHomeDirectory() + File.separator + "broadcastbox";
+            broadcastboxRoot = JiveGlobals.getHomePath().resolve("broadcastbox");
 
-            File broadcastboxRootPath = new File(broadcastboxRoot);
-
-            if (!broadcastboxRootPath.exists())
+            if (!Files.exists(broadcastboxRoot))
             {
-                broadcastboxRootPath.mkdirs();
+                Files.createDirectories(broadcastboxRoot);
             }
+			
 
             broadcastboxHomePath = pluginDirectory.getAbsolutePath() + File.separator + "classes";
 
