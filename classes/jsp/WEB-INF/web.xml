@@ -4,6 +4,16 @@
          xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
          version="3.1">  
 
+	<servlet>
+		<servlet-name>ChordPro2Midi</servlet-name>
+		<servlet-class>org.ifsoft.chordpro.ChordPro2Midi</servlet-class>
+	</servlet>	
+
+    <servlet-mapping>
+        <servlet-name>ChordPro2Midi</servlet-name>
+        <url-pattern>/cp2midi</url-pattern>
+    </servlet-mapping>
+	
 	<filter>
 	  <filter-name>CorsFilter</filter-name>
 	  <filter-class>org.ifsoft.broadcastbox.openfire.CORSFilter</filter-class>

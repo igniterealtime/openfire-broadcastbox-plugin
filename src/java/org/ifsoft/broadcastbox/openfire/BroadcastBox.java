@@ -66,25 +66,33 @@ import org.eclipse.jetty.security.authentication.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import javax.sound.midi.Receiver;
+import javax.sound.midi.MidiMessage;
+
 import org.jitsi.util.OSUtils;
 import de.mxro.process.*;
 import de.mxro.process.internal.*;
 import net.sf.json.*;
 import org.xmpp.packet.*;
+import io.github.leovr.rtipmidi.*;
 
-public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListener, MUCEventListener
+import javax.jmdns.JmDNS;
+import javax.jmdns.ServiceInfo;
+
+public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListener, MUCEventListener, Receiver
 {
     private static final Logger Log = LoggerFactory.getLogger(BroadcastBox.class);
     private XProcess broadcastboxThread = null;
     private String broadcastboxExePath = null;
     private String broadcastboxHomePath = null;
-    private Path broadcastboxRoot = null;
     private ExecutorService executor;
     private WebAppContext jspService;	
     private ServletContextHandler webContext;		
     private Cache muc_properties;	
     private WhipIQHandler whipIQHandler;	
     private WhepIQHandler whepIQHandler;
+	private AppleMidiServer midiServer;
+	private JmDNS jmdns;
 	
     public static BroadcastBox self;	
 
@@ -98,7 +106,9 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
             if (jspService != null) HttpBindManager.getInstance().removeJettyHandler(jspService);
 			if (webContext != null) HttpBindManager.getInstance().removeJettyHandler(webContext);				
 			if (whipIQHandler != null) whipIQHandler.stopHandler();			
-			if (whepIQHandler != null) whepIQHandler.stopHandler();				
+			if (whepIQHandler != null) whepIQHandler.stopHandler();		
+			if (midiServer != null) midiServer.stop();
+			if (jmdns != null) jmdns.unregisterAllServices();
 
             Log.info("broadcastbox terminated");
         }
@@ -130,8 +140,21 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
         executor = Executors.newCachedThreadPool();
         startJSP(pluginDirectory);
         startGoProcesses(pluginDirectory);
-        self = this;					
 		
+		try {
+			jmdns = new JmDNS();
+			String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+			ServiceInfo serviceInfo = new ServiceInfo("_apple-midi._udp.local.", serverName, 50004, "apple-midi");
+			jmdns.registerService(serviceInfo);
+		
+			midiServer = new AppleMidiServer();
+			midiServer.addAppleMidiSession(new MidiReceiverAppleMidiSession(this));		
+			midiServer.start();
+		} catch (Exception e) {
+			Log.error("MDNS registration failed", e);
+		}
+		
+        self = this;							
         Log.info("broadcastbox initiated");
     }
 
@@ -211,9 +234,11 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
 			String tcpPort = JiveGlobals.getProperty("broadcastbox.port", getPort());	
 			String udpPort = JiveGlobals.getProperty("broadcastbox.port.udp", getUDPPort());			
 			String webUrl = "http://" + ipaddr + ":" + tcpPort;
+			String publicHost = XMPPServer.getInstance().getServerInfo().getHostname() + ":" + JiveGlobals.getProperty("httpbind.port.secure", "7443");
 			
 			Engine.environment.put("APP_ENV", "production");
 			Engine.environment.put("HTTP_ADDRESS", ipaddr + ":" + tcpPort);
+			Engine.environment.put("HTTP_PUBLIC_HOST", publicHost);
 			Engine.environment.put("UDP_MUX_PORT_WHEP", udpPort);
 			Engine.environment.put("UDP_MUX_PORT_WHIP", udpPort);			
 			Engine.environment.put("UDP_MUX_PORT", udpPort);
@@ -227,6 +252,7 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
 
  			broadcastboxThread = Spawn.startProcess(broadcastboxExePath, new File(broadcastboxHomePath), this);	
 
+/*
             webContext = new ServletContextHandler(null, "/", ServletContextHandler.SESSIONS);
             webContext.setClassLoader(this.getClass().getClassLoader());			
 			ServletHolder proxyServlet = new ServletHolder(ProxyServlet.Transparent.class);
@@ -234,7 +260,7 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
 			proxyServlet.setInitParameter("prefix", "/");
 			webContext.addServlet(proxyServlet, "/*");	
 			HttpBindManager.getInstance().addJettyHandler(webContext);
-			
+*/			
             Log.info("BroadcastBox enabled " + broadcastboxExePath);
 
         } else {
@@ -245,14 +271,6 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
     private void checkNatives(File pluginDirectory)     {
         try
         {
-            broadcastboxRoot = JiveGlobals.getHomePath().resolve("broadcastbox");
-
-            if (!Files.exists(broadcastboxRoot))
-            {
-                Files.createDirectories(broadcastboxRoot);
-            }
-			
-
             broadcastboxHomePath = pluginDirectory.getAbsolutePath() + File.separator + "classes";
 
             if(OSUtils.IS_LINUX64)
@@ -286,6 +304,22 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
         Log.info("checkNatives broadcastbox executable path " + path);
     }
 
+    // -------------------------------------------------------
+    //
+    //  MIDIReceiver
+    //
+    // -------------------------------------------------------
+	
+    @Override
+    public void send(MidiMessage message, long timeStamp) {
+        Log.info("midi receiver " + message);
+    }
+
+    @Override
+    public void close() {
+        Log.info("midi receiver closed");
+    }
+	
     // -------------------------------------------------------
     //
     //  MUCEventListener
