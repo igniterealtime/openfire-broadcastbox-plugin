@@ -1,16 +1,22 @@
 ## Orin Ayo
 Orin Ayo in Yoruba means "Song of Joy". 
 
-This openfire plugin uses native Java support for the RTP-MIDI protocol and  [Broadcast Box](https://github.com/Glimesh/broadcast-box) to implement a [payload format for communicating user media streams using WebRTC-based ingestion/egress](https://igniterealtime.github.io/openfire-orinayo-plugin/xep). The MIDI events and the WebRTC SDP payload format are transported using IQ stanzas and the personal eventing protocol, a profile of XMPP publish-subscribe specified in XEP-0163.
-It also includes the [OrinAyo Web Client](https://github.com/Jus-Be/orin-ayo) which turns a Guitar Controller Device into a MIDI controller for Arranger Keyboards and Loopers.
-The plugin ebables Openfire to be an XMPP based collaborative music platform by providing a Publish-Subscribe service for both MIDI events and music media streams.
+This openfire plugin enables Openfire to be a live music collaborative platform that enables musical instruments to publish and subscribe to RTP-MIDI and Media Streams with XMPP. 
+
+It uses :
+- [XEP-0231: Bits of Binary](https://xmpp.org/extensions/xep-0231.html) to send and receive MIDI events over XMPP
+- [Java RTP-Midi](https://github.com/LeovR/rtp-midi) to support wireless MIDI hardware over a LAN (WIFI)
+- [Broadcast Box](https://github.com/Glimesh/broadcast-box) to implement a [payload format for publishing and subscribing to media streams in XMPP using WebRTC-based ingestion/egress](https://igniterealtime.github.io/openfire-orinayo-plugin/xep)
+
+The MIDI events and the WebRTC SDP payload format are transported using IQ stanzas and the communication between devices is based on personal eventing protocol, a profile of XMPP publish-subscribe specified in [XEP-0163](https://xmpp.org/extensions/xep-0163.html).
+
+It also includes the [OrinAyo Web Client](https://github.com/Jus-Be/orin-ayo) which supports digital Guitar Controller devices.
 
 ## CI Build Status
 
 [![Build Status](https://github.com/igniterealtime/openfire-orinayo-plugin/workflows/Java%20CI/badge.svg)](https://github.com/igniterealtime/openfire-orinayo-plugin/actions)
 
 ## Overview
-<img src="https://igniterealtime.github.io/openfire-orinayo-plugin/orinayo-summary.png" />
 
 ## Known Issues
 
@@ -24,7 +30,6 @@ copy orinayo.jar to the plugins folder
 
 
 ## How to use
-<img src="https://igniterealtime.github.io/openfire-orinayo-plugin/orinayo-webpage.png" />
 
 ## Further information
 
