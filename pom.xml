@@ -11,17 +11,17 @@
     </parent>
     
     <groupId>org.igniterealtime.openfire</groupId>
-    <artifactId>broadcastbox</artifactId>
+    <artifactId>orinayo</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     
     <properties>      
-    </properties>    
+    </properties>
 
-    <name>Broadcast Box</name>
-    <description>User Media Streams Publish-Subscribe using Broadcast Box</description>
+    <name>Orin Ayo</name>
+    <description>MIDI Events and Media Streams Publish-Subscribe</description>
     <build>
         <sourceDirectory>src/java</sourceDirectory> 
-        <plugins> 
+        <plugins> 	
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>2.7</version>
@@ -59,7 +59,21 @@
                         </resource>
                     </resources>
                     </configuration>
-                </execution>                
+                </execution>   
+                <execution>
+                    <id>override-orinayo-webclient</id>
+                    <phase>prepare-package</phase>
+                    <goals>
+                    <goal>copy-resources</goal>
+                    </goals>
+                    <configuration>
+                    <overwrite>true</overwrite>                 
+                    <outputDirectory>${project.basedir}/classes/jsp</outputDirectory>
+                    <resources>                         
+                        <resource><directory>${project.basedir}/../../Jus-Be/orin-ayo/docs</directory></resource>                                                
+                    </resources>
+                    </configuration>
+                </execution>                				
                </executions>
             </plugin>            
             <plugin>

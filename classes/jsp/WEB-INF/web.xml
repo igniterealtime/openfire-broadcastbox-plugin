@@ -16,7 +16,7 @@
 	
 	<filter>
 	  <filter-name>CorsFilter</filter-name>
-	  <filter-class>org.ifsoft.broadcastbox.openfire.CORSFilter</filter-class>
+	  <filter-class>org.ifsoft.orinayo.openfire.CORSFilter</filter-class>
 	</filter>
 	 
 	<filter-mapping>

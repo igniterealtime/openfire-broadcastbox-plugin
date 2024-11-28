@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Orin Ayo</title>
+    <link rel="stylesheet" href="./css/bootstrap.css">
+    <link rel="stylesheet" href="./css/synth.css">	
+    <link rel="stylesheet" href="./css/main.css">	
+	<!--link rel="stylesheet" href="./assets/chordpro.css" /-->
+	<link rel="stylesheet" href="./assets/style.css" />
+    <link id="favicon"     href="./assets/icon_16.png" rel="shortcut icon" type="image/gif" />		
+</head>
+
+<body>
+  <div style="margin: 10px">
+    <input style="display:none" id="load-midifile" type="file" />
+	<table width="100%">	
+	<tr>
+		<td><img height=96 src="./assets/icon_128.png"/></td>
+		<td>
+			<div><center>
+				<fluent-button appearance="accent" title='Toggle play/stop' id="play">On</fluent-button>
+				<fluent-button appearance="accent" title='Style type' id="style_type">Normal</fluent-button>
+				<fluent-button appearance="accent" title='Guitar playing style' id="gamepad_mode">Color Tabs</fluent-button>
+				<fluent-button appearance="accent" title='Load external file (drum, chord, bass, midi, sty, etc)' id="load_file">Load</fluent-button>
+				<fluent-button appearance="accent" title='Pair/Unpair Stream Deck' id="stream_deck">Stream Deck</fluent-button>					
+				<fluent-button appearance="accent" title='Pair/Unpair LiberLive Guitar' style="display: none;" id="liber_live">LiberLive C1</fluent-button>					
+				<fluent-button appearance="accent" style="display: none;" id="chorda_bluetooth">BT OFF</fluent-button>	
+				<fluent-button appearance="accent" style="display: none;" id="delete_style">Delete Style</fluent-button>				
+				<fluent-button appearance="accent" title='Toggle Pedalboard Display' id="pedal_board">Pedal Board</fluent-button>			
+				<fluent-button appearance="accent" title='Edit Extended ChordPro song' id="chord_pro">ChordPro</fluent-button>
+				<fluent-button appearance="accent" title='Display song lyrics' id="show_lyrics">Lyrics</fluent-button>				
+				<fluent-button appearance="accent" title='Save all settings as a registration (1-7)' id="save_reg">Save</fluent-button>
+				<fluent-button appearance="accent" title='Record performance as video or audio file' style="display: none;" id="record_song">Record</fluent-button>				
+				<fluent-button appearance="accent" title='Refresh application for new settings to take effect' id="reset_app">Refresh</fluent-button>			
+			</center><div>	
+			<div id="sequencer2" style="margin:10px">
+			    <span style="font-size: 14px;margin-left:2px" id="sequencer">Tempo:<span id="showTempo">100</span></span>	
+				<input title='Overall Tempo control' id="tempo" type="range" min="30.0" max="180.0" step="1" value="100" style="height: 20px; width: 150px">
+				<input title='Enable microphone' style="margin-left: 10px;margin-right: 10px;" id="microphone" type="checkbox">Mic
+				<input title='Play Drum Fills automatically when variation chnages' style="margin-left: 10px;margin-right: 10px;" id="autoFill" type="checkbox" checked>Auto Fill
+				<input title='Play Intro end Ending' style="margin-left: 10px;margin-right: 10px;" id="introEnd" type="checkbox" checked>Intro/Outro
+				<input title='Enable Guitar pedal effects' checked style="margin-left: 10px;margin-right: 10px;" id="reverb" type="checkbox">Pedals
+				<input title='Dont override midi file program change settings' style="margin-left: 10px;margin-right: 10px;" id="program-change" type="checkbox">No P.Change
+				<input title='Guitar volume control' id="volume" type="range" min="1" max="100" step="1" value="25" style="height: 20px; width: 150px;margin-left: 20px;margin-right: 10px;">
+				<span id="showVol">VOL</span>
+			</div>
+		</td>
+	</tr>		
+	</table>
+
+    <canvas style="margin: 0; display: none;" id="lyrics"></canvas>	
+	<div style="display: none;" class="pedalboard">
+	</fluent-tabs>		
+	</div>	
+	<iframe src="https://jus-be.github.io/chordpro-pdf-online/" style="display: none;" id="chordpro"></iframe>	
+	
+	<table id="settings" width="90%">	
+	<tr><td><b>Guitar Strum</b></td><td><select id="guitarType" type="text" class="form-control input"></select></td>	
+	    <td><select  title='Strum type for Pad 3'id="guitarStrum1" type="text" class="form-control input"></select></td>	
+	    <td><select  title='Strum type for Pad 4'id="guitarStrum2" type="text" class="form-control input"></select></td>
+	    <td><select title='Strum type for Pad 5' id="guitarStrum3" type="text" class="form-control input"></select></td>
+	    <td><select title='Neck Position' id="guitarPosition" type="text" class="form-control input"><option value=1>I</option><option selected value=2>II</option><option value=3>III&nbsp;</option></select></td>		
+	    <td><select title='Guitar Effects Preset' id="effectsPreset" type="text" class="form-control input"><option selected value='default'>Default</option></select></td>				
+	</tr>	
+	<tr><td><b>Arranger Type</b></td><td><select id="arrangerType" type="text" class="form-control input"></select></td><td valign="top" rowspan="13" colspan="5"><div id="synth"></div></td></tr>	
+	<tr><td><b>Arranger Group</b></td><td><select id="arrangerGroup" type="text" class="form-control input"></select></td><td></td></tr>	
+	<tr><td><b>Arranger Style</b></td><td><select id="arrangerStyle" type="text" class="form-control input"></select></td><td></td></tr>	
+	<tr><td><b>Sound Font File</b></td><td><select id="arrangerSf2" type="text" class="form-control input"></select></td><td></td></tr>	
+    <tr><td><b>Output MIDI Device</b></td><td><select id="midiOutSel" type="text" class="form-control input"></select></td><td></td></tr>
+    <tr><td><b>Input MIDI Device</b></td><td><select id="midiInSel" type="text" class="form-control input"></select></td><td></td></tr>	
+    <tr><td><b>Input Device Type</b></td><td><select id="midiInType" type="text" class="form-control input"></select></td><td></td></tr>	
+    <tr><td><b>Pads Synth MIDI Device</b></td><td><select id="midiPadsSel" type="text" class="form-control input"></select></td><td></td></tr>	
+    <tr><td><b>RealGuitar MIDI Device</b></td><td><select id="midiFwdSel" type="text" class="form-control input"></select></td><td></td></tr>
+    <tr><td><b>RealGuitar Strum Pattern</b></td><td><select id="realguitar" type="text" class="form-control input"></select></td><td></td></tr>	
+    <tr><td><b>Input Audio Device</b></td><td><select id="inputAudioDevice" type="text" class="form-control input"></select></td><td></td></tr>	
+    <tr><td><b>Output Audio Device</b></td><td><select id="outputAudioDevice" type="text" class="form-control input"></select></td><td></td></tr>	
+    <tr><td><b>Audio Chord Loop</b></td><td><select id="realchordLoop" type="text" class="form-control input"></select></td><td></td></tr>	
+    <tr><td><b>Audio Drum Loop</b></td><td><select id="realdrumLoop" type="text" class="form-control input"></select></td><td></td></tr>	
+    <tr><td><b>Audio Bass Loop</b></td><td><select id="realbassLoop" type="text" class="form-control input"></select></td><td></td></tr>		
+	<tr>
+		<td><b>ChordTracker MIDI Device</b></td>
+		<td><select id="midiChordTrackerSel" type="text" class="form-control input"></select></td>
+		<td valign="top" rowspan="2" colspan="4">
+			<div id="liberlive" style="display:none;">
+				<div><center><b>Liber Live Style</b></center></div>
+				<table width="100%">
+					<tr>
+						<td>Paddle A Chord</td>
+						<td>Paddle A Drums</td>
+						<td>Paddle B Chord</td>
+						<td>Paddle B Drums</td>					
+					</tr>
+					<tr>				
+						<td><select id="ll-chord1" type="text" class="form-control input"></select></td>	
+						<td><select id="ll-drums1" type="text" class="form-control input"></select></td>
+						<td><select id="ll-chord2" type="text" class="form-control input"></select></td>
+						<td><select id="ll-drums2" type="text" class="form-control input"></select></td>					
+					</tr>
+				</table>
+			</div>
+		</td>
+	</tr>
+	<tr><td><b>Song Sequence</b></td><td><select id="songSequence" type="text" class="form-control input"></select></td><td></td></tr>	
+	</table>
+  </div>  
+  <div style="margin-top: 20px;">	
+	<table width="90%">
+	  <tr>	  
+      <td align="left" width="20%"><span style="font-size: 28px" id="orinayo">C</span></td>
+      <td align="left" width="20%"><span style="font-size: 28px" id="orinayo-section">Arr A</span></td>
+      <td align="left" width="20%"><span style="font-size: 28px" id="orinayo-pad">Pad 2</span></td>
+      <td align="left" width="20%"><span style="font-size: 28px" id="orinayo-strum">Strum 1</span></td>
+      <td align="left" width="20%"><span style="font-size: 28px" id="orinayo-reg">Slot 0</span></td>	  
+	  </tr>
+	  <tr> <td colspan="5"><canvas id="tempoCanvas" width="1150" height="50" style="margin: 0px; display:none"></canvas></td></tr>
+	  </table>	
+  </div>
+
+  <canvas id="gameCanvas" width="1000" height="175" style="margin: 0;"></canvas>
+  <div style="margin-left: 20px;font-size: 24px" id="lyrics"></div>
+	
+  <div id="giglad" style="margin-top: 20px; display: none;">
+	  <button id="giglad">Giglad Learn</button>&nbsp;Use this button to send style control CC to Giglad (5 sec interval)<br/>
+	  FADE-IN | FADE-OUT | PLAY | STOP | INTRO 1-3 | MAIN 1-4 | FILL 1-4 | BREAK 1-4
+  </div>
+
+  <script src='./js/0270_EGuitar_FSBS_SF2_file.js'></script>
+  <script src='./js/0250_RG_Acoustic_SF2_file.js'></script>
+  <script src='./js/0250_Aspirin_sf2_file.js'></script>
+  <script src='./js/0250_Chaos_sf2_file.js'></script>
+  <script src='./js/0250_LK_AcousticSteel_SF2_file.js'></script>
+  <script src='./js/0253_Acoustic_Guitar_sf2_file.js'></script>
+  <script src='./js/0341_Aspirin_sf2_file.js'></script>  
+  <script src='./js/0260_JCLive_sf2_file.js'></script>
+  <script src="./assets/pedalboard.js" type="module"></script>  
+  <script src="./js/basic-pitch.js"></script>    
+  <script src="./js/stream-deck.js"></script>  
+  <script src="./js/chordsheet.js"></script>  
+  <script src="./js/stophe.min.js"></script>  
+  <script src='./js/webaudio-font-player.js'></script>  
+  <script src="./js/web-components.min.js" type="module"></script>
+  <script src="./js/note.js"></script>
+  <script src="./js/hitBar.js"></script>
+  <script src="./js/gameBoard.js"></script>
+  <script src="./js/webmidi.min.js"></script>
+  <script src="./js/midi-parser.js"></script>    
+  <script src="./js/loops.js"></script>
+  <script src="./js/styles.js"></script>  
+  <script src="./js/songs.js"></script>    
+  <script src="./js/audio_looper.js"></script>    
+  <script src="./js/sf2.parser.min.js"></script>
+  <script src="./js/sf2.synth.min.js"></script>	 
+  <script src="./js/midi.ble.js"></script>	
+  <script src="./js/midi-creator.js"></script>	
+  <script src="./js/main.js"></script>  
+
+</body>
+</html>

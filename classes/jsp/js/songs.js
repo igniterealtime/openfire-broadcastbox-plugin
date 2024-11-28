@@ -1,0 +1,22 @@
+var song_sequences = [
+	"assets/songs/AfterTheGoldRush.mid",                                                 
+	"assets/songs/AmazingGrace.mid",                                                     
+	"assets/songs/BebopBlues.mid",                                                       
+	"assets/songs/CantFindMyWayHome.mid",                                                
+	"assets/songs/Downtown.mid",                                                         
+	"assets/songs/EverybodyWantsToRule.mid",   
+	"assets/songs/HeavenAndEarth.mid",
+	"assets/songs/ItsTooLate.mid",                                                       
+	"assets/songs/LouieLouie.mid",                                                       
+	"assets/songs/LoveMeDo.mid",                                                         
+	"assets/songs/LoveTrain.mid",                                                        
+	"assets/songs/Michelle.mid",                                                         
+	"assets/songs/MinorBlues.mid",                                                       
+	"assets/songs/MyGirl.mid",                                                           
+	"assets/songs/ShuffleBlues.mid",                                                     
+	"assets/songs/Superstition.mid",                                                     
+	"assets/songs/TheLetter.mid",                                                        
+	"assets/songs/TwoOfUs.mid",                                                          
+	"assets/songs/WalkingOnSunshine.mid",                                                
+	"assets/songs/WickedGame.mid"                                                      
+]

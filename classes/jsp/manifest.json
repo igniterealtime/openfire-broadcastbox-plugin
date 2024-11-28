@@ -1,0 +1,25 @@
+{
+	"manifest_version": 3,
+	"name": "OrinAyo",  
+	"short_name": "OrinAyo",
+	"description": "The Guitar Arranger",
+	"version": "0.9.7",
+
+	"background": {
+		"service_worker": "./js/background.js"
+	}, 
+	"permissions": [
+		"storage",   
+		"unlimitedStorage"
+	],	
+	"action": {
+      "default_icon": {
+		"16": "assets/icon_16.png",
+		"128": "assets/icon_128.png"
+      }   
+	},		
+	"icons": {
+		"16": "assets/icon_16.png",
+		"128": "assets/icon_128.png"
+	}
+}

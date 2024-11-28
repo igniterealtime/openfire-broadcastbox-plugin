@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <plugin>
     <author>Ignite Realtime</author>
-    <class>org.ifsoft.broadcastbox.openfire.BroadcastBox</class>
+    <class>org.ifsoft.orinayo.openfire.BroadcastBox</class>
     <name>${project.name}</name>
     <description>${project.description}</description>
     <version>${project.version}</version>
@@ -11,8 +11,13 @@
 
    <adminconsole>
         <tab id="sidebar-media-services">                                                                            
-            <item id="broadcastbox-summary" name="${config.page.summary}" description="${config.page.summary.description}" url="broadcast-box-summary.jsp"/>
-            <item id="broadcastbox-settings" name="${config.page.settings}" description="${config.page.settings.description}" url="broadcast-box-settings.jsp"/>			 			
-        </tab>  		
+            <item id="orinayo-summary" name="${config.page.summary}" description="${config.page.summary.description}" url="orinayo-summary.jsp"/>
+            <item id="orinayo-settings" name="${config.page.settings}" description="${config.page.settings.description}" url="orinayo-settings.jsp"/>			 			
+        </tab>  
+        <tab id="tab-webclients" name="${admin.sidebar.webclients.name}" description="${admin.sidebar.webclients.description}" url="orinayo-player.jsp">
+            <sidebar id="tab-orinayo" name="${plugin.title}" description="${plugin.description}">
+                <item id="orinayo-player"  name="${admin.sidebar.webclients.item.player.title}" description="${admin.sidebar.webclients.item.player.description}"  url="orinayo-player.jsp"/>				
+            </sidebar>
+        </tab>		
     </adminconsole> 
 </plugin>
