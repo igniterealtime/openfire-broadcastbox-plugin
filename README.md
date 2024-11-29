@@ -1,5 +1,5 @@
 ## Orin Ayo
-Orin Ayo in Yoruba means "Song of Joy". 
+Orin Ayo in Yoruba means "A Song of Joy". 
 
 This openfire plugin enables Openfire to be a live music collaborative platform that enables musical instruments to publish and subscribe to RTP-MIDI and Media Streams with XMPP. 
 
