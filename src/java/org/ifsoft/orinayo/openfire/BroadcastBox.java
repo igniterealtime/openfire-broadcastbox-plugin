@@ -48,7 +48,6 @@ import org.jivesoftware.util.StringUtils;
 import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.proxy.ProxyServlet;
 import org.eclipse.jetty.servlets.*;
 import org.eclipse.jetty.servlet.*;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -251,16 +250,6 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
 			Engine.environment.put("STUN_SERVERS", "stun1.l.google.com:19305|stun1.l.google.com:19302|stun4.l.google.com:19302|stun.frozenmountain.com:3478|stun.freeswitch.org:3478");			
 
  			orinayoThread = Spawn.startProcess(orinayoExePath, new File(orinayoHomePath), this);	
-
-/*
-            webContext = new ServletContextHandler(null, "/", ServletContextHandler.SESSIONS);
-            webContext.setClassLoader(this.getClass().getClassLoader());			
-			ServletHolder proxyServlet = new ServletHolder(ProxyServlet.Transparent.class);
-			proxyServlet.setInitParameter("proxyTo", webUrl);
-			proxyServlet.setInitParameter("prefix", "/");
-			webContext.addServlet(proxyServlet, "/*");	
-			HttpBindManager.getInstance().addJettyHandler(webContext);
-*/			
             Log.info("BroadcastBox enabled " + orinayoExePath);
 
         } else {
