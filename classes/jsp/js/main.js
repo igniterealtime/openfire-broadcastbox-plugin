@@ -25,6 +25,10 @@ const WHAMMY = 2;
 const LOGO = 12;
 const CONTROL = 100;
 
+var recorderDestination = null;
+var streamDestination = null;
+var peerConnection = null;
+var lavaGenieWaitout = 1000;
 var keysSound1 = null;
 var keysSound2 = null;
 var savedDrumVol = 100;
@@ -44,7 +48,6 @@ var lyricsX = 2;
 var lyricsY = 18;
 var lyricsCanvas = null;
 var recorderFilename = null;
-var recorderDestination = null;
 var mediaRecorder = null;
 var recordMode = false;
 var writeCharacteristic = null;
@@ -310,7 +313,10 @@ function handleLiberLive(selected) {
 			services: ["000000ff-0000-1000-8000-00805f9b34fb"],
 		}]});
 
-		if (device) await device.forget();			
+		if (device) {
+			await device.forget();			
+			console.debug("forget liberlive", device);
+		}
 	});
 }
 
@@ -422,10 +428,7 @@ async function onLavaGenieClick() {
 		await device.watchAdvertisements();		
 		
 	} else {
-		device = await navigator.bluetooth.requestDevice({		
-			filters: [{
-			services: ["0000fee0-0000-1000-8000-00805f9b34fb"],
-		}]});
+		device = await navigator.bluetooth.requestDevice({filters: [{services: ["0000fee0-0000-1000-8000-00805f9b34fb"]}], optionalServices: ["f000ffc0-0451-4000-b000-000000000000"]});
 
 		if (device) {
 			textDecoder = new TextDecoder("utf-8"); 			
@@ -451,6 +454,7 @@ async function onLiberLiveClick() {
 	
 	let ready, device;
 	const devices = await navigator.bluetooth.getDevices();
+	console.debug('onLiberLiveClick - devices', devices);
 
 	if (devices.length > 0) {
 		device = devices[0];
@@ -500,6 +504,7 @@ async function doLavaGenieSetup(device) {
 		const services = await server.getPrimaryServices();
 		
 		for (let service of services) {
+			console.debug("GATT service", service.uuid, service.isPrimary, service);
 			const characteristics = await service.getCharacteristics();
 			
 			for (let characteristic of characteristics) 
@@ -530,10 +535,10 @@ async function doLavaGenieSetup(device) {
 				}
 				else
 					
-				if (characteristic.properties.write) {
+				if (characteristic.properties.writeWithoutResponse) {
 					writeCharacteristic = characteristic;	
 					//setTimeout(setLiberLiveChordMappings);
-					//setTimeout(setLiberLiveDeviceSettings, 1000);
+					setTimeout(setLavaGenieSettings, 1000);
 				}
 				else
 					
@@ -551,21 +556,257 @@ async function doLavaGenieSetup(device) {
 						resetGuitarHero();
 					}	
 
-					document.getElementById("liberlive").style.display = "";					
+					document.getElementById("lavagenie").style.display = "";					
 					
 					handlers[characteristic.uuid].addEventListener('characteristicvaluechanged', (evt) => {
 						const {buffer}  = evt.target.value;
-						const eventData = new Uint8Array(buffer);					
+						const eventData = new Uint8Array(buffer);
 						
-						//if (eventData.length != 14 || (eventData.length == 14 && eventData[9] != 49 && eventData[9] != 50 && eventData[10] != 49 && eventData[10] != 50)) {
-							for (let i in eventData) console.debug("Event", eventData.length, i + ":" + eventData[i]);						
-						//}	
+						for (let i in eventData) console.debug("Event", eventData.length, i + ":" + eventData[i]);	
+
+						let chordSelected = false;
+						let paddleMoved = false;
+						resetGuitarHero();
 						
+						if (eventData[0] == 202 && eventData[1] == 2 && eventData[2] == 101) { // control buttons
+								
+							if (eventData[3] == 2 && eventData[4] == 103) {	
+
+								if (!styleStarted) {
+									pad.buttons[LOGO] = true;		// START
+								} else {
+									pad.buttons[STARPOWER] = true;	// next style
+								}
+							}
+							else
+								
+							if (eventData[3] == 0 && eventData[4] == 101) {	
+								if (styleStarted) {
+									pad.buttons[LOGO] = true;		// STOP
+								}
+							}							
+	
+						}
+						else
+
+						if (eventData[0] == 202 && eventData[1] == 2 && eventData[2] == 92) { // chord key press	
+						
+							if (eventData[3] == 27 && eventData[4] == 71) {
+								pad.buttons[YELLOW] = true;		// 7b			
+								pad.buttons[RED] = true;								
+								chordSelected = true;
+							}
+							else
+								
+							if (eventData[3] == 26 && eventData[4] == 70) {
+								pad.buttons[YELLOW] = true;		// 5b			
+								pad.buttons[GREEN] = true;								
+								pad.buttons[RED] = true;							
+								chordSelected = true;
+							}
+							else
+
+							if (eventData[3] == 17 && eventData[4] == 77) {
+								pad.buttons[YELLOW] = true;		// 7b			
+								pad.buttons[RED] = true;								
+								chordSelected = true;
+							}
+							else
+								
+							if (eventData[3] == 52 && eventData[4] == 104) {
+								pad.buttons[RED] = true;		// 6m
+								chordSelected = true;
+							}
+							else
+								
+							if (eventData[3] == 53 && eventData[4] == 105) {
+								pad.buttons[RED] = true;		// 6
+								pad.buttons[YELLOW] = true;
+								pad.buttons[BLUE] = true;							
+								chordSelected = true;
+							}
+							else
+								
+							if (eventData[3] == 84 && eventData[4] == 8) {
+								pad.buttons[GREEN] = true;		// 5								
+								chordSelected = true;
+							}
+							else
+								
+							if (eventData[3] == 81 && eventData[4] == 13) {
+								pad.buttons[GREEN] = true;		// 5sus							
+								pad.buttons[YELLOW] = true;						
+								chordSelected = true;
+							}
+							else
+								
+							if (eventData[3] == 85 && eventData[4] == 9) {
+								pad.buttons[GREEN] = true;		// 5/7
+								pad.buttons[RED] = true;							
+								chordSelected = true;
+							}													
+							else
+								
+							if (eventData[3] == 97 && eventData[4] == 61) {
+								pad.buttons[YELLOW] = true;		// 1
+								chordSelected = true;
+							}
+							else
+								
+							if (eventData[3] == 107 && eventData[4] == 55) {
+								pad.buttons[YELLOW] = true;		// 1sus
+								pad.buttons[ORANGE] = true;							
+								chordSelected = true;
+							}
+							else
+
+							if (eventData[3] == 106 && eventData[4] == 54) {
+								pad.buttons[YELLOW] = true;		// 1/3
+								pad.buttons[BLUE] = true;							
+								chordSelected = true;
+							}
+							else						
+								
+							if (eventData[3] == 129 && eventData[4] == 221) {
+								pad.buttons[ORANGE] = true;		// 4								
+								chordSelected = true;
+							}
+							else
+								
+							if (eventData[3] == 139 && eventData[4] == 215) {
+								pad.buttons[ORANGE] = true;		// 3b
+								pad.buttons[BLUE] = true;		
+								pad.buttons[RED] = true;							
+								chordSelected = true;
+							}
+							else
+
+							if (eventData[3] == 138 && eventData[4] == 214) {
+								pad.buttons[ORANGE] = true;		// 4/6
+								pad.buttons[BLUE] = true;							
+								chordSelected = true;
+							}
+							else						
+								
+							if (eventData[3] == 164 && eventData[4] == 248) {
+								pad.buttons[BLUE] = true;		// 2m
+								chordSelected = true;
+							}
+							else
+								
+							if (eventData[3] == 161 && eventData[4] == 253) {
+								pad.buttons[BLUE] = true;		// 2
+								pad.buttons[RED] = true;							
+								chordSelected = true;
+							}
+							else
+								
+							if (eventData[3] == 165 && eventData[4] == 249) {
+								pad.buttons[ORANGE] = true;		// 4m
+								pad.buttons[RED] = true;							
+								chordSelected = true;
+							}	
+							else
+								
+							if (eventData[3] == 177 && eventData[4] == 237) {
+								pad.buttons[GREEN] = true;		// 3m
+								pad.buttons[BLUE] = true;								
+								chordSelected = true;
+							}
+							else
+								
+							if (eventData[3] == 196 && eventData[4] == 152) {
+								pad.buttons[GREEN] = true;		// 3
+								pad.buttons[YELLOW] = true;								
+								pad.buttons[BLUE] = true;								
+								chordSelected = true;
+							}						
+							else
+								
+							if (eventData[3] == 201 && eventData[4] == 149) {
+								pad.buttons[GREEN] = true;		// 5m
+								pad.buttons[ORANGE] = true;															
+								chordSelected = true;
+							} 		
+						}
+				
+						if (chordSelected) { 
+							pad.axis[STRUM] = isStrumUp ? STRUM_UP : STRUM_DOWN;			
+							isStrumUp = !isStrumUp;							
+						}
+
+						if (pad.buttons[LOGO]) {
+							toggleStartStop();
+						} else {
+							updateCanvas();	
+
+							if (pad.axis[STRUM] == STRUM_UP || pad.axis[STRUM] == STRUM_DOWN || pad.buttons[START] || pad.buttons[STARPOWER]) {			
+								doChord();				
+							}	
+						}												
 					});					
 				}
 			}
 		}
 	}						
+}
+
+async function setLavaGenieSettings() {
+	// bluetooth.addr==dd:22:33:44:67:fc
+	// bluetooth.addr==dd:22:33:44:67:fc && btatt.opcode.method==0x12
+	
+	/*
+	// Startup 
+	writeGenie([0xac, 0x2, 0xe6, 0x1, 0xe7]);
+	writeGenie([0xac, 0x2, 0x4e, 0x52, 0x1c]);
+	writeGenie([0xac, 0x2, 0x4e, 0x4a, 0x4]);
+	writeGenie([0xac, 0x2, 0x4e, 0x57, 0x19]);
+	writeGenie([0xac, 0x2, 0x4e, 0x59, 0x17]);
+	writeGenie([0xac, 0x2, 0x4e, 0x5a, 0x14]);
+	writeGenie([0xac, 0x2, 0x44, 0x0, 0x44]);
+	writeGenie([0xac, 0x2, 0x44, 0x1, 0x45]);
+	writeGenie([0xac, 0x2, 0x44, 0x2, 0x46]);
+	writeGenie([0xac, 0x2, 0x44, 0x3, 0x47]);
+	writeGenie([0xac, 0x2, 0x44, 0x4, 0x40]);
+	writeGenie([0xac, 0x2, 0x44, 0x5, 0x41]);
+	writeGenie([0xac, 0x1, 0x46, 0x46]);
+	writeGenie([0xac, 0x2, 0x4e, 0x63, 0x2d]);
+	writeGenie([0xac, 0x2, 0x4e, 0x4c, 0x2]);
+	writeGenie([0xac, 0x2, 0x4e, 0x49, 0x7]);
+	writeGenie([0xac, 0x2, 0x4e, 0x4f, 0x1]);
+	writeGenie([0xac, 0x1, 0xe2, 0xe2]);
+	writeGenie([0xac, 0x2, 0x4e, 0xe8, 0xa6]);
+	writeGenie([0xac, 0x2, 0x4e, 0x65, 0x2b]);
+	writeGenie([0xac, 0x2, 0x4e, 0x6a, 0x24]);
+	writeGenie([0xac, 0x2, 0x4e, 0xe9, 0xa7]);
+	writeGenie([0xac, 0x4, 0xee, 0x0, 0x0, 0x0, 0xee]);
+	writeGenie([0xad, 0x4, 0xee, 0x0, 0x0, 0x0, 0xee]);
+
+	// song mode
+	writeGenie([0xac, 0x2, 0xe6, 0x0, 0xe6]);
+	writeGenie([0xad, 0x1a, 0x70, 0x7, 0x1, 0xfb, 0x1, 0xf0, 0x1, 0xef, 0x1, 0xee, 0x1, 0xea, 0x1, 0xe9, 0x1, 0xe8, 0x1, 0xe7, 0x1, 0xe4, 0x1, 0xe3, 0x1, 0xe2, 0x1, 0xe1, 0x75]);
+	writeGenie([0xac, 0x2, 0x65, 0x0, 0x65]);
+	writeGenie([0xad, 0x4, 0x70, 0x7, 0x1, 0xdc, 0xaa]);
+	*/
+
+	// enable key press events
+	writeGenie([0xac, 0x2, 0x5d, 0x1, 0x5c]);
+
+	// mapping
+	//writeGenie([0xac, 0x2d, 0x67, 0x16, 0x4c, 0x11, 0x34, 0x54, 0x61, 0x81, 0xa4, 0xc7, 0x19, 0x39, 0x59, 0x69, 0x8b, 0xa9, 0xb1, 0x14, 0x31, 0x51, 0x64, 0x84, 0xa1, 0xc4, 0x8, 0x63, 0x11, 0x34, 0x54, 0x61, 0x81, 0xa4, 0xc7, 0x2, 0x49, 0x0, 0x2, 0x4a, 0x0, 0x2, 0x52, 0x4a, 0x2, 0x57, 0x1, 0x69]);
+
+	// key 1 LED 
+	//writeGenie([0xac, 0x6, 0x5c, 0x11, 0x1, 0x0, 0x0, 0x2, 0x4e]);
+}
+
+function writeGenie(bytes) {
+	setTimeout(async () => {
+		let dataView = new Uint8Array(bytes);	
+		resp = await writeCharacteristic.writeValue(dataView);
+		console.debug("writeGenie", bytes, resp);		
+	}, lavaGenieWaitout);
+	
+	lavaGenieWaitout = lavaGenieWaitout + 300;
 }
 
 async function setLiberLiveChordMappings() {
@@ -677,14 +918,73 @@ function packString(str) {
 	return bArr;
 }
 
+async function handleMediaStream(started) {
+	console.debug("handleMediaStream", started);
+		
+	if (!started) {
+		const gain = audioContext.createGain();	
+		streamDestination = audioContext.createMediaStreamDestination();	
+		gain.connect(streamDestination);	
+		
+		if (window.pedalOutput) pedalOutput.connect(streamDestination);	
+
+		let mediaOptions = {audio: true, video: false}
+		
+		peerConnection = new RTCPeerConnection();
+
+		peerConnection.oniceconnectionstatechange = () => {
+			console.debug("handleMediaStream - status", peerConnection.iceConnectionState);
+		}
+		
+		streamDestination.stream.getTracks().forEach(t => {
+			if (t.kind === 'audio') {
+				console.debug('handleMediaStream track', t.kind, t.id, t);				
+				peerConnection.addTransceiver(t, {direction: 'sendonly'})
+			}
+		})		
+		
+		const offer = await peerConnection.createOffer();
+		peerConnection.setLocalDescription(offer);
+		console.debug('handleMediaStream offer', offer.sdp);	
+		
+		window.connection.sendIQ($iq({type: 'set', to: window.connection.domain}).c('whip', {xmlns: 'urn:xmpp:whip:0'}).c('sdp', offer.sdp), 
+			function (res)  {
+				const answer = res.querySelector('sdp').innerHTML;
+				peerConnection.setRemoteDescription({sdp: answer,  type: 'answer'});	
+				console.debug('handleMediaStream answer', answer);			
+
+			}, function (err) {
+				console.warn('handleMediaStream failed', err);
+			}
+		);
+		
+	} else {
+		if (peerConnection) {			
+			peerConnection.close();
+			peerConnection = null;
+		}
+	}		
+}
+
 function startXMPP() {
+	const streamSong = document.querySelector("#stream_song");	
 	
-	if (location.origin.startsWith("chrome-extension") || location.origin.startsWith("https://jus-be.github.io/")) {
-		return;
-	}
+	streamSong.addEventListener("click", async (evt) => {
+		const streamStarted = streamSong.innerText == "Stop Stream";
+		console.debug("Stream clicked", streamStarted);
+		streamSong.innerText = streamStarted ? "Start Stream" : "Stop Stream";		
+		await handleMediaStream(streamStarted);
+		streamSong.style.setProperty("--accent-fill-rest", !streamStarted ? "red" : "green");			
+	});		
 	
 	let url = "wss://" + location.host + "/ws/";	
-    const jid = location.hostname;
+    let jid = location.hostname;
+	
+	if (location.hostname == "oeplgfliognafobghehfffbppakffdkc") {
+		url = "ws://localhost:7070/ws/";	
+		jid = "localhost";
+	}
+	
     console.debug("XMPPConnection JID", jid, url);	
 	
     window.connection = new Strophe.Connection(url);	
@@ -694,21 +994,15 @@ function startXMPP() {
 
         if (status === Strophe.Status.CONNECTED)  {
             window.connection.send($pres());
+			streamSong.style.display = "";
+			streamSong.style.setProperty("--accent-fill-rest", "green");	
         }
         else
 
         if (status === Strophe.Status.DISCONNECTED)  {
-
+			streamSong.style.display = "none";
         }
     });
-
-    window.connection.addHandler(function (message) {
-        const json_ele = message.querySelector("json");
-        const json = JSON.parse(json_ele.innerHTML);
-
-        return true;
-
-    }, "urn:xmpp:json:0", 'message');
 }
 
 async function doLiberLiveSetup(device) {
@@ -1195,7 +1489,7 @@ function initLavaGenie() {
 
 async function onloadHandler() {
 	console.debug("onloadHandler");
-
+	
 	let version = "latest";
 	if (!!chrome.runtime?.getManifest) version = chrome.runtime.getManifest().version;
 	document.title = "Orin Ayo | " + version;
@@ -1213,8 +1507,8 @@ async function onloadHandler() {
 	
 	document.body.addEventListener('click', function(event) 	{
 		// TODO
-		//if (inputDeviceType == "liberlivec1") initLiberLive();
-		//if (inputDeviceType == "lavagenie") initLavaGenie();		
+		if (inputDeviceType == "liberlivec1") initLiberLive();
+		if (inputDeviceType == "lavagenie") initLavaGenie();		
 	})
 	
 	
@@ -2783,7 +3077,10 @@ function letsGo() {
 	  }
 	  
 	  setupUI(config, err);	
-	  startXMPP();
+	  
+	  if (!location.origin.startsWith("chrome-extension") && location.hostname != "jus-be.github.io") {
+		startXMPP();
+	  }	  
     }, true);
 }
 

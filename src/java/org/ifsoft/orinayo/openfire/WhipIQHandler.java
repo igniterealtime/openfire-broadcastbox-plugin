@@ -39,6 +39,7 @@ import org.xmpp.packet.PacketError;
 
 import java.nio.charset.StandardCharsets;
 import java.net.*;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -76,16 +77,20 @@ public class WhipIQHandler extends IQHandler implements ServerFeaturesProvider
 
 			try {
 				Log.debug("Whip handleIQ \n" + iq.toString());
-				final Element element = iq.getChildElement();
-				final String from = iq.getFrom().toBareJID();
+				final Element whip = iq.getChildElement();
+				final String id = iq.getFrom().getNode();
 					
-				if (element != null) {
+				if (whip != null) {
+					final Element sdp = whip.element("sdp");
+					final String offer = sdp.getText();
+					
+					final String ipaddr = JiveGlobals.getProperty("orinayo.ipaddr", BroadcastBox.getIpAddress());
+					final String tcpPort = JiveGlobals.getProperty("orinayo.port", BroadcastBox.getPort());				
+					final String webUrl = "http://" + ipaddr + ":" + tcpPort + "/api/whip";
+					
+					final String answer = getSDP(webUrl, id, offer);
 					final Element childElement = reply.setChildElement(ELEMENT_NAME, NAMESPACE1);					
-					final String offer = childElement.element("sdp").getText();
-					final String answer = getSDPAnswer(offer);
 					childElement.addElement("sdp").setText(answer);
-					
-					// TODO	- create/config PEP node
 				}
 				else {
 					reply.setError(new PacketError(PacketError.Condition.not_allowed, PacketError.Type.modify, "request element is missing"));
@@ -99,17 +104,7 @@ public class WhipIQHandler extends IQHandler implements ServerFeaturesProvider
 			}
 		}
 		return null;
-    }	
-	
-	private String getSDPAnswer(String offer) {
-		String answer = "";
-		String ipaddr = JiveGlobals.getProperty("orinayo.ipaddr", BroadcastBox.getIpAddress());
-		String tcpPort = JiveGlobals.getProperty("orinayo.port", BroadcastBox.getPort());				
-		String webUrl = "http://" + ipaddr + ":" + tcpPort;
-		
-		// TODO
-		return answer;
-	}					
+    }					
 
     @Override
     public IQHandlerInfo getInfo() {
@@ -123,5 +118,46 @@ public class WhipIQHandler extends IQHandler implements ServerFeaturesProvider
         features.add( NAMESPACE1 );
 		features.add( NAMESPACE2 );
         return features.iterator();
-    }		
+    }
+
+	private String getSDP(String urlToRead, String streamKey, String sdp)  {
+		URL url;
+		HttpURLConnection conn;
+		BufferedReader rd;
+		String line;
+		String accumulator = "";
+		StringBuilder result = new StringBuilder();
+		String authHeaderValue = "Bearer " + streamKey;
+		
+		Log.info("getSDP offer " + urlToRead + " " + authHeaderValue + "\n" + sdp);
+		
+		try {
+			url = new URL(urlToRead);
+			conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestProperty("Authorization", authHeaderValue);			
+
+			conn.setDoOutput(true);
+			conn.setDoInput(true);
+			conn.setUseCaches(false);
+			conn.setRequestMethod("POST");  
+			conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+			conn.setRequestProperty("Connection", "Keep-Alive");
+			conn.setRequestProperty("Charset", "UTF-8");
+			conn.setRequestProperty("Accept", "text/event-stream");
+			
+			conn.getOutputStream().write(sdp.getBytes(StandardCharsets.UTF_8));
+			rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			
+			while ((line = rd.readLine()) != null) {
+				accumulator = accumulator + line + "\n";				
+			}
+			rd.close();				
+
+		} catch (Exception e) {
+			Log.error("getSDP", e);
+		}
+		Log.info("getSDP answer " + urlToRead + " " + authHeaderValue + "\n" + accumulator);		
+		return accumulator;
+	}
+	
 }

@@ -40,6 +40,7 @@ import org.xmpp.packet.PacketError;
 import java.nio.charset.StandardCharsets;
 import java.net.*;
 import java.util.*;
+import java.io.*;
 import java.util.concurrent.*;
 
 import net.sf.json.*;
@@ -52,10 +53,10 @@ public class WhepIQHandler extends IQHandler implements ServerFeaturesProvider
     private final static Logger Log = LoggerFactory.getLogger( WhepIQHandler.class );	
 	private final static String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 	
-    public static final String ELEMENT_NAME = "whip";
-    public static final String NAMESPACE1 = "urn:xmpp:whip:0";
-    public static final String NAMESPACE2 = "urn:xmpp:whip:ice:0";	
-    public static final String NAMESPACE3 = "urn:xmpp:whip:ext:0";	
+    public static final String ELEMENT_NAME = "whep";
+    public static final String NAMESPACE1 = "urn:xmpp:whep:0";
+    public static final String NAMESPACE2 = "urn:xmpp:whep:ice:0";	
+    public static final String NAMESPACE3 = "urn:xmpp:whep:ext:0";	
 	
 	public void startHandler() {
 
@@ -72,21 +73,25 @@ public class WhepIQHandler extends IQHandler implements ServerFeaturesProvider
     @Override
     public IQ handleIQ(IQ iq)
     {
-		if (iq.getType() == IQ.Type.get) {
+		if (iq.getType() == IQ.Type.set) {
 			IQ reply = IQ.createResultIQ(iq);
 
 			try {
 				Log.debug("Whep handleIQ \n" + iq.toString());
-				final Element element = iq.getChildElement();
-				final String from = iq.getFrom().toBareJID();
+				final Element whep = iq.getChildElement();
+				final String id = whep.attribute("id").getText();
 					
-				if (element != null) {
+				if (whep != null) {
+					final Element sdp = whep.element("sdp");
+					final String offer = sdp.getText();
+					
+					final String ipaddr = JiveGlobals.getProperty("orinayo.ipaddr", BroadcastBox.getIpAddress());
+					final String tcpPort = JiveGlobals.getProperty("orinayo.port", BroadcastBox.getPort());				
+					final String webUrl = "http://" + ipaddr + ":" + tcpPort + "/api/whep";
+					
+					final String answer = getSDP(webUrl, id, offer);
 					final Element childElement = reply.setChildElement(ELEMENT_NAME, NAMESPACE1);					
-					final String offer = childElement.element("sdp").getText();
-					final String answer = getSDPAnswer(offer);
 					childElement.addElement("sdp").setText(answer);
-					
-					// TODO	- create/config PEP node
 				}
 				else {
 					reply.setError(new PacketError(PacketError.Condition.not_allowed, PacketError.Type.modify, "request element is missing"));
@@ -100,17 +105,7 @@ public class WhepIQHandler extends IQHandler implements ServerFeaturesProvider
 			}
 		}
 		return null;
-    }	
-	
-	private String getSDPAnswer(String offer) {
-		String answer = "";
-		String ipaddr = JiveGlobals.getProperty("orinayo.ipaddr", BroadcastBox.getIpAddress());
-		String tcpPort = JiveGlobals.getProperty("orinayo.port", BroadcastBox.getPort());				
-		String webUrl = "http://" + ipaddr + ":" + tcpPort;
-		
-		// TODO
-		return answer;
-	}					
+    }						
 
     @Override
     public IQHandlerInfo getInfo() {
@@ -126,4 +121,44 @@ public class WhepIQHandler extends IQHandler implements ServerFeaturesProvider
 		features.add( NAMESPACE3 );		
         return features.iterator();
     }		
+	
+	private String getSDP(String urlToRead, String streamKey, String sdp)  {
+		URL url;
+		HttpURLConnection conn;
+		BufferedReader rd;
+		String line;
+		String accumulator = "";
+		StringBuilder result = new StringBuilder();
+		String authHeaderValue = "Bearer " + streamKey;
+		
+		Log.info("getSDP offer " + urlToRead + " " + authHeaderValue + "\n" + sdp);
+		
+		try {
+			url = new URL(urlToRead);
+			conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestProperty("Authorization", authHeaderValue);			
+
+			conn.setDoOutput(true);
+			conn.setDoInput(true);
+			conn.setUseCaches(false);
+			conn.setRequestMethod("POST");  
+			conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+			conn.setRequestProperty("Connection", "Keep-Alive");
+			conn.setRequestProperty("Charset", "UTF-8");
+			conn.setRequestProperty("Accept", "text/event-stream");
+			
+			conn.getOutputStream().write(sdp.getBytes(StandardCharsets.UTF_8));
+			rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			
+			while ((line = rd.readLine()) != null) {
+				accumulator = accumulator + line + "\n";				
+			}
+			rd.close();				
+
+		} catch (Exception e) {
+			Log.error("getSDP", e);
+		}
+		Log.info("getSDP answer " + urlToRead + " " + authHeaderValue + "\n" + accumulator);		
+		return accumulator;
+	}	
 }

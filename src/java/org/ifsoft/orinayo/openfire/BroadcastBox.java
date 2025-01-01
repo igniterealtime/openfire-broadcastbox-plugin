@@ -100,19 +100,21 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
         MUCEventDispatcher.removeListener(this);		
 
         try {
+            Log.info("orinayo terminated - started");			
             if (executor != null)  executor.shutdown();
             if (orinayoThread != null) orinayoThread.destory();
             if (jspService != null) HttpBindManager.getInstance().removeJettyHandler(jspService);
 			if (webContext != null) HttpBindManager.getInstance().removeJettyHandler(webContext);				
 			if (whipIQHandler != null) whipIQHandler.stopHandler();			
 			if (whepIQHandler != null) whepIQHandler.stopHandler();		
-			if (midiServer != null) midiServer.stop();
-			if (jmdns != null) jmdns.unregisterAllServices();
 
-            Log.info("orinayo terminated");
+			if (jmdns != null) jmdns.unregisterAllServices();
+			if (midiServer != null) midiServer.stop();			
+
+            Log.info("orinayo terminated - completed");
         }
         catch (Exception e) {
-            Log.error("BroadcastBox destroyPlugin", e);
+            Log.error("orinayo terminated - aborted", e);
         }
     }
 
@@ -145,13 +147,14 @@ public class BroadcastBox implements Plugin, PropertyEventListener, ProcessListe
 			String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 			ServiceInfo serviceInfo = new ServiceInfo("_apple-midi._udp.local.", serverName, 50004, "apple-midi");
 			jmdns.registerService(serviceInfo);
-		
-			midiServer = new AppleMidiServer();
-			midiServer.addAppleMidiSession(new MidiReceiverAppleMidiSession(this));		
-			midiServer.start();
+
 		} catch (Exception e) {
 			Log.error("MDNS registration failed", e);
 		}
+	
+		//midiServer = new AppleMidiServer();
+		//midiServer.addAppleMidiSession(new MidiReceiverAppleMidiSession(this));		
+		//midiServer.start();		
 		
         self = this;							
         Log.info("orinayo initiated");

@@ -16,7 +16,7 @@
         </tab>  
         <tab id="tab-webclients" name="${admin.sidebar.webclients.name}" description="${admin.sidebar.webclients.description}" url="orinayo-player.jsp">
             <sidebar id="tab-orinayo" name="${plugin.title}" description="${plugin.description}">
-                <item id="orinayo-player"  name="${admin.sidebar.webclients.item.player.title}" description="${admin.sidebar.webclients.item.player.description}"  url="orinayo-player.jsp"/>				
+                <item id="orinayo-player"  name="${admin.sidebar.webclients.item.player.name}" description="${admin.sidebar.webclients.item.player.description}"  url="orinayo-player.jsp"/>				
             </sidebar>
         </tab>		
     </adminconsole> 

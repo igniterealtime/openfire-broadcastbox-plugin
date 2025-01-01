@@ -20,7 +20,7 @@
 <%@ page import="org.jivesoftware.util.*,
          org.jivesoftware.openfire.*,
                  java.util.*,
-				 org.ifsoft.llama.openfire.*,
+				 org.ifsoft.orinayo.openfire.*,
                  java.net.URLEncoder"                 
     errorPage="error.jsp"
 %>
@@ -39,7 +39,7 @@
 <html>
 <head>
 <title><fmt:message key="plugin.title.description" /></title>
-<meta name="pageID" content="llama-chat"/>
+<meta name="pageID" content="orinayo-player"/>
 <style type="text/css">
     #jive-main table, #jive-main-content {
         height: 600px;
@@ -48,7 +48,7 @@
 </head>
 <body>
 <div>
-	<a href="<%= url %>">Open Orin Ayo</a>;
+	<a target="_blank" href="<%= url %>">Open Orin Ayo</a>;
 </div>
 <!--iframe frameborder='0' style='border:0px; border-width:0px; margin-left: 0px; margin-top: 0px; margin-right: 0px; margin-bottom: 0px; width:100%;height:100%;' src='<%= url %>'></iframe-->
 </body>

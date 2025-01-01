@@ -32,6 +32,7 @@
 				<fluent-button appearance="accent" title='Display song lyrics' id="show_lyrics">Lyrics</fluent-button>				
 				<fluent-button appearance="accent" title='Save all settings as a registration (1-7)' id="save_reg">Save</fluent-button>
 				<fluent-button appearance="accent" title='Record performance as video or audio file' style="display: none;" id="record_song">Record</fluent-button>				
+				<fluent-button appearance="accent" title='Stream performance to hosted server' style="display: none;" id="stream_song">Start Stream</fluent-button>					
 				<fluent-button appearance="accent" title='Refresh application for new settings to take effect' id="reset_app">Refresh</fluent-button>			
 			</center><div>	
 			<div id="sequencer2" style="margin:10px">
@@ -99,6 +100,9 @@
 					</tr>
 				</table>
 			</div>
+			<div id="lavagenie" style="display:none;">
+				<div><center><h3>Lava Genie Ready</h3></center></div>
+			</div>			
 		</td>
 	</tr>
 	<tr><td><b>Song Sequence</b></td><td><select id="songSequence" type="text" class="form-control input"></select></td><td></td></tr>	
@@ -133,7 +137,7 @@
   <script src='./js/0253_Acoustic_Guitar_sf2_file.js'></script>
   <script src='./js/0341_Aspirin_sf2_file.js'></script>  
   <script src='./js/0260_JCLive_sf2_file.js'></script>
-  <script src="./assets/pedalboard.js" type="module"></script>  
+  <script src="./assets/pedalboard.js" type="module"></script>   
   <script src="./js/basic-pitch.js"></script>    
   <script src="./js/tonal.min.js"></script>    
   <script src="./js/stream-deck.js"></script>  
