@@ -71,40 +71,59 @@ public class WhepIQHandler extends IQHandler implements ServerFeaturesProvider
     }
 
     @Override
-    public IQ handleIQ(IQ iq)
-    {
-		if (iq.getType() == IQ.Type.set) {
-			IQ reply = IQ.createResultIQ(iq);
+    public IQ handleIQ(IQ iq)    {
+		Log.debug("Whep handleIQ \n" + iq.toString());
+		
+		IQ reply = IQ.createResultIQ(iq);
+		final Element whep = iq.getChildElement();
+		
+		try {		
+			if (whep != null) {	
+				final String ipaddr = JiveGlobals.getProperty("orinayo.ipaddr", BroadcastBox.getIpAddress());
+				final String tcpPort = JiveGlobals.getProperty("orinayo.port", BroadcastBox.getPort());				
 
-			try {
-				Log.debug("Whep handleIQ \n" + iq.toString());
-				final Element whep = iq.getChildElement();
-				final String id = whep.attribute("id").getText();
-					
-				if (whep != null) {
+				if (iq.getType() == IQ.Type.set) {
 					final Element sdp = whep.element("sdp");
-					final String offer = sdp.getText();
-					
-					final String ipaddr = JiveGlobals.getProperty("orinayo.ipaddr", BroadcastBox.getIpAddress());
-					final String tcpPort = JiveGlobals.getProperty("orinayo.port", BroadcastBox.getPort());				
-					final String webUrl = "http://" + ipaddr + ":" + tcpPort + "/api/whep";
-					
-					final String answer = getSDP(webUrl, id, offer);
+					final String id = whep.attribute("id").getText();
+		
+					final String offer = sdp.getText();					
+					final String answer = fetch("http://" + ipaddr + ":" + tcpPort + "/api/whep", id, offer, "POST");
 					final Element childElement = reply.setChildElement(ELEMENT_NAME, NAMESPACE1);					
 					childElement.addElement("sdp").setText(answer);
 				}
-				else {
-					reply.setError(new PacketError(PacketError.Condition.not_allowed, PacketError.Type.modify, "request element is missing"));
-				}
-				return reply;
-
-			} catch(Exception e) {
-				Log.error("Whep handleIQ", e);
-				reply.setError(new PacketError(PacketError.Condition.internal_server_error, PacketError.Type.modify, e.toString()));
-				return reply;
+				else
+					
+				if (iq.getType() == IQ.Type.get) {					
+					final Element childElement = reply.setChildElement(ELEMENT_NAME, NAMESPACE1);
+					JSONArray streams = new JSONArray(fetch("http://" + ipaddr + ":" + tcpPort + "/api/status", null, null, "GET"));					
+					/* 	[
+							{
+								"streamKey":"deleolajide",
+								"firstSeenEpoch":1735911011,
+								"audioPacketsReceived":112,
+								"videoStreams":[],
+								"whepSessions":[]
+							}
+						]
+					
+					*/					
+					for (int i=0; i<streams.length(); i++)	{
+						JSONObject stream = streams.getJSONObject(i);
+						Element item = childElement.addElement("item");
+						item.addAttribute("id", stream.getString("streamKey"));
+					}
+				}								
 			}
-		}
-		return null;
+			else {
+				reply.setError(new PacketError(PacketError.Condition.not_allowed, PacketError.Type.modify, "whep element is missing"));
+			}
+			return reply;	
+
+		} catch(Exception e) {
+			Log.error("Whep handleIQ", e);
+			reply.setError(new PacketError(PacketError.Condition.internal_server_error, PacketError.Type.modify, e.toString()));
+			return reply;
+		}			
     }						
 
     @Override
@@ -120,34 +139,38 @@ public class WhepIQHandler extends IQHandler implements ServerFeaturesProvider
 		features.add( NAMESPACE2 );
 		features.add( NAMESPACE3 );		
         return features.iterator();
-    }		
-	
+    }	
+
 	private String getSDP(String urlToRead, String streamKey, String sdp)  {
+		return fetch(urlToRead, streamKey, sdp, "POST");
+	}
+	
+	private String fetch(String urlToRead, String streamKey, String payload, String method)  {
 		URL url;
 		HttpURLConnection conn;
 		BufferedReader rd;
 		String line;
 		String accumulator = "";
 		StringBuilder result = new StringBuilder();
-		String authHeaderValue = "Bearer " + streamKey;
+		String authHeaderValue = streamKey != null ? "Bearer " + streamKey : null;
 		
-		Log.info("getSDP offer " + urlToRead + " " + authHeaderValue + "\n" + sdp);
+		Log.info("fetch offer " + urlToRead + " " + authHeaderValue + "\n" + payload);
 		
 		try {
 			url = new URL(urlToRead);
 			conn = (HttpURLConnection) url.openConnection();
-			conn.setRequestProperty("Authorization", authHeaderValue);			
+			if (authHeaderValue != null) conn.setRequestProperty("Authorization", authHeaderValue);			
 
 			conn.setDoOutput(true);
 			conn.setDoInput(true);
 			conn.setUseCaches(false);
-			conn.setRequestMethod("POST");  
+			conn.setRequestMethod(method);  
 			conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
 			conn.setRequestProperty("Connection", "Keep-Alive");
 			conn.setRequestProperty("Charset", "UTF-8");
 			conn.setRequestProperty("Accept", "text/event-stream");
 			
-			conn.getOutputStream().write(sdp.getBytes(StandardCharsets.UTF_8));
+			if (payload != null) conn.getOutputStream().write(payload.getBytes(StandardCharsets.UTF_8));
 			rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 			
 			while ((line = rd.readLine()) != null) {
@@ -156,9 +179,9 @@ public class WhepIQHandler extends IQHandler implements ServerFeaturesProvider
 			rd.close();				
 
 		} catch (Exception e) {
-			Log.error("getSDP", e);
+			Log.error("fetch", e);
 		}
-		Log.info("getSDP answer " + urlToRead + " " + authHeaderValue + "\n" + accumulator);		
+		Log.info("fetch answer " + urlToRead + " " + authHeaderValue + "\n" + accumulator);		
 		return accumulator;
 	}	
 }

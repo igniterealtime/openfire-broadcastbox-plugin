@@ -44,7 +44,7 @@
 <section1 topic='Introduction' anchor='intro'> 
   <p>While WebRTC specifies the usage of SDPs [RFC8866] and an Offer/Answer model [RFC3264] for creating connections, WebRTC does not define the precise signaling protocols over which SDPs should be exchanged [RFC8825]. In order to establish a WebRTC session between two WebRTC entities, a signaling protocol is usually used to exchange SDPs</p>
   <p>With HTTP/S applications, WHIP and WHEP have been proposed as simple protocols to ingest and egress media streams using WebRTC.</p>
-  <p>This specification provideds the means to do likewise in XMPP for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is transported using set and get IQ stanzas which map directly to WHIP and WHEP.</p>
+  <p>This specification provideds the means to do likewise in XMPP for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is transported using IQ stanzas which map directly to WHIP and WHEP REST endpoints.</p>
   <p>This specification does not prescribe a method for the discovery, publishing and subscription of available URIs for WHIP and WHEP. It is assumed that this will be achieved with other XMPP mechanisms like Publish-Subscribe (&xep0060;) or HTTP Online Meetings (&xep0483;) for example.</p>
 </section1>
 <section1 topic="Requirements" anchor="reqs">
@@ -128,7 +128,7 @@
   </whep>
 </iq>	
     ]]></example> 	
-    <example caption='Client sends an WHEP SDP offer to receive a known user media stream'><![CDATA[ 
+    <example caption='Client sends an WHEP SDP offer to receive a specific user media stream'><![CDATA[ 
 <iq from='romeo@shakespeare.lit/consumer' id='6338Vbrhrl' type='set'>
   <whep id="ih28sx61" xmlns='urn:xmpp:whep:0'>
     <sdp>  

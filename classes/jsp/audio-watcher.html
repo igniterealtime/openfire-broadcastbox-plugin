@@ -10,9 +10,6 @@
   </head>
 
   <body>
-    <b> Stream Key </b> <input type="text" id="streamKey" /> <br />
-    <button onclick="window.watchStream()"> Watch Stream </button>
-
     <h3> Audio </h3>
     <audio id="audioPlayer" autoplay controls style="width: 500"> </audio>
 
@@ -21,7 +18,7 @@
   </body>
 
   <script>
-	window.watchStream = () => {
+	window.addEventListener("load", function() {
 		window.connection = new Strophe.Connection(location.protocol.replace("http", "ws") + "//" + location.host + "/ws/");
 
 		window.connection.connect(location.hostname, null, function (status) {
@@ -30,41 +27,18 @@
 			if (status === Strophe.Status.CONNECTED)  {
 				window.connection.send($pres());
 
-				setTimeout(() => {
-					const streamKey = document.getElementById('streamKey').value
-
-					if (streamKey === '') {
-						return window.alert('Stream Key must not be empty')
-					}	
-					
-					let peerConnection = new RTCPeerConnection()
-					peerConnection.addTransceiver('audio', { direction: 'recvonly' })
-
-					peerConnection.ontrack = function (event) {
-						document.getElementById('audioPlayer').srcObject = event.streams[0]
-					}
-
-					peerConnection.oniceconnectionstatechange = () => {
-						document.getElementById('connectionState').innerText = peerConnection.iceConnectionState;
-					}
-
-					peerConnection.createOffer().then(offer => {
-						peerConnection.setLocalDescription(offer);
-						console.debug('whep offer', offer.sdp);					
+				window.connection.sendIQ($iq({type: 'get', to: window.connection.domain}).c('whep', {xmlns: 'urn:xmpp:whep:0'}), 
+					function (res)  {
+						console.debug('whep get response', res);						
+						const item = res.querySelector('item');
 						
-						window.connection.sendIQ($iq({type: 'set', to: window.connection.domain}).c('whep', {id: streamKey, xmlns: 'urn:xmpp:whep:0'}).c('sdp', offer.sdp), 
-							function (res)  {
-								console.debug('whep response', res);						
-								const answer = res.querySelector('sdp').innerHTML;
-								peerConnection.setRemoteDescription({sdp: answer,  type: 'answer'});	
-								console.debug('whep answer', answer);			
-
-							}, function (err) {
-								console.warn('whep failed', err);
-							}
-						);				
-					})
-				});
+						if (item) {		
+							viewStream(item.getAttribute("id"));
+						}
+					}, function (err) {
+						console.warn('whep failed', err);
+					}
+				);	
 			}
 			else
 
@@ -72,6 +46,36 @@
 
 			}
 		});
-    }
+    });
+	
+	function viewStream(streamKey) {
+		let peerConnection = new RTCPeerConnection()
+		peerConnection.addTransceiver('audio', { direction: 'recvonly' })
+
+		peerConnection.ontrack = function (event) {
+			document.getElementById('audioPlayer').srcObject = event.streams[0]
+		}
+
+		peerConnection.oniceconnectionstatechange = () => {
+			document.getElementById('connectionState').innerText = peerConnection.iceConnectionState;
+		}
+
+		peerConnection.createOffer().then(offer => {
+			peerConnection.setLocalDescription(offer);
+			console.debug('whep offer', offer.sdp);					
+			
+			window.connection.sendIQ($iq({type: 'set', to: window.connection.domain}).c('whep', {id: streamKey, xmlns: 'urn:xmpp:whep:0'}).c('sdp', offer.sdp), 
+				function (res)  {
+					console.debug('whep set response', res);						
+					const answer = res.querySelector('sdp').innerHTML;
+					peerConnection.setRemoteDescription({sdp: answer,  type: 'answer'});	
+					console.debug('whep answer', answer);			
+
+				}, function (err) {
+					console.warn('whep failed', err);
+				}
+			);				
+		})	
+	}
   </script>
 </html>

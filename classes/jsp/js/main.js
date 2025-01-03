@@ -27,7 +27,8 @@ const CONTROL = 100;
 
 var recorderDestination = null;
 var streamDestination = null;
-var peerConnection = null;
+var publishConnection = null;
+var watchConnection = null;
 var lavaGenieWaitout = 1000;
 var keysSound1 = null;
 var keysSound2 = null;
@@ -937,6 +938,74 @@ function packString(str) {
 	return bArr;
 }
 
+function fetchStreams() {
+	console.debug("fetchStreams");
+
+	const streamSong = document.querySelector("#stream_song");	
+	const activeStreams = document.querySelector("#activeStreams");	
+	activeStreams.options[0] = new Option("**UNUSED**", "activeStreams", false, false);		
+	
+	activeStreams.addEventListener("change", function() {
+		console.debug("fetchStreams selected stream", activeStreams.value);
+		
+		if ("activeStreams" == activeStreams.value) {
+			if (watchConnection) {			
+				watchConnection.close();
+				watchConnection = null;
+				
+				const streamStarted = streamSong.innerText == "Stop Stream";
+				streamSong.style.setProperty("--accent-fill-rest", streamStarted ? "red" : "green");					
+			}
+			
+		} else {
+			watchConnection = new RTCPeerConnection()
+			watchConnection.addTransceiver('audio', { direction: 'recvonly' })
+
+			watchConnection.ontrack = function (event) {
+				document.getElementById('audioPlayer').srcObject = event.streams[0]
+			}
+
+			watchConnection.oniceconnectionstatechange = () => {
+				console.debug("", watchConnection.iceConnectionState);
+				streamSong.style.setProperty("--accent-fill-rest", "purple");			
+			}
+
+			watchConnection.createOffer().then(offer => {
+				watchConnection.setLocalDescription(offer);
+				console.debug('fetchStreams offer', offer.sdp);					
+				
+				window.connection.sendIQ($iq({type: 'set', to: window.connection.domain}).c('whep', {id: activeStreams.value, xmlns: 'urn:xmpp:whep:0'}).c('sdp', offer.sdp), 
+					function (res)  {
+						console.debug('fetchStreams whep set response', res);						
+						const answer = res.querySelector('sdp').innerHTML;
+						watchConnection.setRemoteDescription({sdp: answer,  type: 'answer'});	
+						console.debug('fetchStreams whep answer', answer);			
+
+					}, function (err) {
+						console.warn('fetchStreams whep failed', err);
+					}
+				);				
+			})		
+		}
+	});	
+	
+	window.connection.sendIQ($iq({type: 'get', to: window.connection.domain}).c('whep', {xmlns: 'urn:xmpp:whep:0'}), 
+		function (res)  {
+			console.debug('fetchStreams response', res);						
+			const items = res.querySelectorAll('item');
+			let count = 1;
+			
+			for (item of items) {		
+				const id = item.getAttribute("id");
+				activeStreams.options[count] = new Option(id, id, false, false);	
+			}
+			
+		}, function (err) {
+			console.warn('fetchStreams failed', err);
+		}
+	);	
+}
+
 async function handleMediaStream(started) {
 	console.debug("handleMediaStream", started);
 		
@@ -949,27 +1018,27 @@ async function handleMediaStream(started) {
 
 		let mediaOptions = {audio: true, video: false}
 		
-		peerConnection = new RTCPeerConnection();
+		publishConnection = new RTCPeerConnection();
 
-		peerConnection.oniceconnectionstatechange = () => {
-			console.debug("handleMediaStream - status", peerConnection.iceConnectionState);
+		publishConnection.oniceconnectionstatechange = () => {
+			console.debug("handleMediaStream - status", publishConnection.iceConnectionState);
 		}
 		
 		streamDestination.stream.getTracks().forEach(t => {
 			if (t.kind === 'audio') {
 				console.debug('handleMediaStream track', t.kind, t.id, t);				
-				peerConnection.addTransceiver(t, {direction: 'sendonly'})
+				publishConnection.addTransceiver(t, {direction: 'sendonly'})
 			}
 		})		
 		
-		const offer = await peerConnection.createOffer();
-		peerConnection.setLocalDescription(offer);
+		const offer = await publishConnection.createOffer();
+		publishConnection.setLocalDescription(offer);
 		console.debug('handleMediaStream offer', offer.sdp);	
 		
 		window.connection.sendIQ($iq({type: 'set', to: window.connection.domain}).c('whip', {xmlns: 'urn:xmpp:whip:0'}).c('sdp', offer.sdp), 
 			function (res)  {
 				const answer = res.querySelector('sdp').innerHTML;
-				peerConnection.setRemoteDescription({sdp: answer,  type: 'answer'});	
+				publishConnection.setRemoteDescription({sdp: answer,  type: 'answer'});	
 				console.debug('handleMediaStream answer', answer);			
 
 			}, function (err) {
@@ -978,15 +1047,16 @@ async function handleMediaStream(started) {
 		);
 		
 	} else {
-		if (peerConnection) {			
-			peerConnection.close();
-			peerConnection = null;
+		if (publishConnection) {			
+			publishConnection.close();
+			publishConnection = null;
 		}
 	}		
 }
 
 function startXMPP() {
 	const streamSong = document.querySelector("#stream_song");	
+	const activeStreams = document.querySelector("#active_streams");	
 	
 	streamSong.addEventListener("click", async (evt) => {
 		const streamStarted = streamSong.innerText == "Stop Stream";
@@ -1014,12 +1084,15 @@ function startXMPP() {
         if (status === Strophe.Status.CONNECTED)  {
             window.connection.send($pres());
 			streamSong.style.display = "";
-			streamSong.style.setProperty("--accent-fill-rest", "green");	
+			activeStreams.style.display = "";
+			streamSong.style.setProperty("--accent-fill-rest", "green");
+			fetchStreams();			
         }
         else
 
         if (status === Strophe.Status.DISCONNECTED)  {
 			streamSong.style.display = "none";
+			activeStreams.style.display = "none";			
         }
     });
 }
