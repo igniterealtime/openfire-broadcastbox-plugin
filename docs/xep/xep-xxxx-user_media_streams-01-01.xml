@@ -7,7 +7,7 @@
 <xep xmlns="">
 <header>
   <title>DISCO</title>
-  <abstract>This specification defines a payload format for the ingestion and egress of media streams using WebRTC-based ingestion/egress for music and other collaborations. </abstract>
+  <abstract>This specification defines a payload format for the ingestion and egress of media streams for music and other media collaborations using WebRTC-based ingestion/egress. </abstract>
   <legal>
     <copyright>This XMPP Extension Protocol is copyright © 1999 – 2023 by the <link url="https://xmpp.org/">XMPP Standards Foundation</link> (XSF).</copyright>
     <permissions>Permission is hereby granted, free of charge, to any person obtaining a copy of this specification (the "Specification"), to make use of the Specification without restriction, including without limitation the rights to implement the Specification in a software program, deploy the Specification in a network service, and copy, modify, merge, publish, translate, distribute, sublicense, or sell copies of the Specification, and to permit persons to whom the Specification is furnished to do so, subject to the condition that the foregoing copyright notice and this permission notice shall be included in all copies or substantial portions of the Specification. Unless separate permission is granted, modified works that are redistributed shall not contain misleading information regarding the authors, title, number, or publisher of the Specification, and shall not claim endorsement of the modified works by the authors, any organization or project to which the authors belong, or the XMPP Standards Foundation.</permissions>
@@ -44,12 +44,12 @@
 <section1 topic='Introduction' anchor='intro'> 
   <p>While WebRTC specifies the usage of SDPs [RFC8866] and an Offer/Answer model [RFC3264] for creating connections, WebRTC does not define the precise signaling protocols over which SDPs should be exchanged [RFC8825]. In order to establish a WebRTC session between two WebRTC entities, a signaling protocol is usually used to exchange SDPs</p>
   <p>With HTTP/S applications, WHIP and WHEP have been proposed as simple protocols to ingest and egress media streams using WebRTC.</p>
-  <p>This specification is restricted to the payload format for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is transported using set and get IQ stanzas which map directly to WHIP and WHEP.</p>
+  <p>This specification provideds the means to do likewise in XMPP for communicating user media streams using WebRTC-based ingestion/egress. The WebRTC SDP payload format is transported using set and get IQ stanzas which map directly to WHIP and WHEP.</p>
   <p>This specification does not prescribe a method for the discovery, publishing and subscription of available URIs for WHIP and WHEP. It is assumed that this will be achieved with other XMPP mechanisms like Publish-Subscribe (&xep0060;) or HTTP Online Meetings (&xep0483;) for example.</p>
 </section1>
 <section1 topic="Requirements" anchor="reqs">
   <ul>
-    <li>Be as easy to implement as possible. This is grounded on the idea that most programming languages already have HTTP libraries available.</li>
+    <li>Be as easy to implement as possible. This is grounded on the idea that most XMPP implementation programming languages already have HTTP libraries available.</li>
     <li>Usable with WebRTC-based broadcasting providers that have no XMPP integration.</li>
     <li>Usable with XMPP client applications that may have no HTTP/S access to the WebRTC-based ingestion/egress service.</li>	
     <li>Anyone who knows the WHIP and WHEP REST Endpoints SHOULD be able to access them as well.</li>
@@ -61,14 +61,14 @@
     <p>If the server can push ice candidates patches from the WebRTC-based ingestion/egress, it SHOULD include 'urn:xmpp:whip:ice:0' and 'urn:xmpp:whep:ice:0' namespaces. If the WebRTC-based egress supports extensions, then it SHOULD also include the 'urn:xmpp:whep:ext:0' namespace. </p>
     <example caption="Client sends service discovery request to server"><![CDATA[
 <iq to='shakespeare.lit'
-    from='juliet@capulet.lit/broadcast'
+    from='juliet@capulet.lit/producer'
     id='disco_01'
     type='get'>
   <query xmlns='http://jabber.org/protocol/disco#info'/>
 </iq>]]></example>
     <example caption="Server replies to service discovery request and reports capability for WebRTC-based ingestion, egress, extensions and ice candidate trickles"><![CDATA[
 <iq from='shakespeare.lit'
-    to='juliet@capulet.lit/broadcast'
+    to='juliet@capulet.lit/producer'
     id='disco_01'
     type='result'>
   <query xmlns='http://jabber.org/protocol/disco#info'>
@@ -86,7 +86,7 @@
   <section2 topic='User requests server to ingest a media stream' anchor='ingest-media-stream'>   
     <p>A sample protocol flow to ingest a media session from the client</p> 
     <example caption='Client sends a WHIP SDP offer of a media stream to server'><![CDATA[  
-<iq from='juliet@capulet.lit/broadcast' id='ih28sx61' type='set'>
+<iq from='juliet@capulet.lit/producer' id='ih28sx61' type='set'>
   <whip xmlns='urn:xmpp:whip:0'>
     <sdp>
 	  ...... SDP OFFER
@@ -95,7 +95,7 @@
 </iq>	
     ]]></example> 
     <example caption='The server responds with a WHIP SDP answer for the client'><![CDATA[  
-<iq to='juliet@capulet.lit/broadcast' id='ih28sx61' from='shakespeare.lit' type='result'>
+<iq to='juliet@capulet.lit/producer' id='ih28sx61' from='shakespeare.lit' type='result'>
   <whip xmlns='urn:xmpp:whip:0'>
     <sdp>  
       ...... SDP ANSWER
@@ -104,32 +104,32 @@
 </iq>	
     ]]></example> 
     <example caption='The server pushes a patched WHIP SDP with ICE candidates'><![CDATA[  
-<iq to='juliet@shakespeare.lit/globe' id='87645fg23' from='shakespeare.lit' type='set'>
+<iq to='juliet@shakespeare.lit/producer' id='87645fg23' from='shakespeare.lit' type='set'>
   <whip xmlns='urn:xmpp:whip:0'>
     <sdp>  
       ...... SDP PATCH
     </sdp>	
   </whip>   
 </iq>	
-    ]]></example> 	
+    ]]></example> 		
+  </section2>
+  
+  <section2 topic='Another user requests for user media stream' anchor='egress-media-stream'>   
+    <p>A sample protocol flow to egress a user media by the client</p> 
     <example caption='Client requests all active and accessible media streams'><![CDATA[  
-<iq to='shakespeare.lit' from='juliet@capulet.lit/broadcast' id='ih28sx31' type='get'>
-  <query xmlns='http://jabber.org/protocol/disco#items'/>
+<iq to='shakespeare.lit' from='romeo@capulet.lit//consumer' id='ih28sx31' type='get'>
+  <whep xmlns='urn:xmpp:whep:0' />
 </iq>	
     ]]></example> 	
     <example caption='The server returns a list of media stream identities'><![CDATA[  
-<iq to='juliet@capulet.lit/broadcast' id='ih28sx31' from='shakespeare.lit' type='result'>
-  <query xmlns='http://jabber.org/protocol/disco#items'>
-    <item jid="ih28sx61.broadcast.shakespeare.lit"  node="ih28sx61">
-  </query>
+<iq to='romeo@capulet.lit//consumer' id='ih28sx31' from='shakespeare.lit' type='result'>
+  <whep xmlns='urn:xmpp:whep:0'>
+    <item id="ih28sx61">
+  </whep>
 </iq>	
     ]]></example> 	
-  </section2>
-  
-  <section2 topic='Subscriber requests for user media stream' anchor='egress-media-stream'>   
-    <p>A sample protocol flow to egress a user media by the client</p> 
     <example caption='Client sends an WHEP SDP offer to receive a known user media stream'><![CDATA[ 
-<iq from='romeo@shakespeare.lit/globe' id='6338Vbrhrl' type='get'>
+<iq from='romeo@shakespeare.lit/consumer' id='6338Vbrhrl' type='set'>
   <whep id="ih28sx61" xmlns='urn:xmpp:whep:0'>
     <sdp>  
       ...... SDP OFFER
@@ -138,7 +138,7 @@
 </iq>	
     ]]></example> 
     <example caption='The server responds with an WHEP SDP answer for the client and the available WHEP extensions supported'><![CDATA[  
-<iq to='romeo@shakespeare.lit/globe' id='6338Vbrhrl' from='shakespeare.lit' type='result'>
+<iq to='romeo@shakespeare.lit/consumer' id='6338Vbrhrl' from='shakespeare.lit' type='result'>
   <whep id="ih28sx61" xmlns='urn:xmpp:whep:0'>
     <sdp>  
       ...... SDP ANSWER
@@ -151,7 +151,7 @@
 </iq>	
     ]]></example>  
     <example caption='The server pushes a WHEP simulcast layers server-sent event'><![CDATA[  
-<iq to='romeo@shakespeare.lit/globe' id='3947254qxcf' from='shakespeare.lit' type='set'>
+<iq to='romeo@shakespeare.lit/consumer' id='3947254qxcf' from='shakespeare.lit' type='set'>
   <whep id="ih28sx61" xmlns='urn:xmpp:whep:0'>
     <ext xmlns='urn:ietf:params:whep:ext:core:server-sent-events'>       
 	  ...... JSON PAYLOAD
@@ -160,7 +160,7 @@
 </iq>	
     ]]></example>  
     <example caption='Client selects a simulcast layer'><![CDATA[ 
-<iq from='romeo@shakespeare.lit/globe' id='8453sf42' type='set'>
+<iq from='romeo@shakespeare.lit/consumer' id='8453sf42' type='set'>
   <whep id="ih28sx61" xmlns='urn:xmpp:whep:0'>
     <ext xmlns='urn:ietf:params:whep:ext:core:layer'>       
 	  ...... JSON PAYLOAD
@@ -169,7 +169,7 @@
 </iq>	
     ]]></example>	
     <example caption='The server pushes a patched WHEP SDP with ICE candidates'><![CDATA[  
-<iq to='romeo@shakespeare.lit/globe' id='54398hdg21' from='shakespeare.lit' type='set'>
+<iq to='romeo@shakespeare.lit/consumer' id='54398hdg21' from='shakespeare.lit' type='set'>
   <whep id="ih28sx61" xmlns='urn:xmpp:whep:0'>
     <sdp>  
       ...... SDP PATCH

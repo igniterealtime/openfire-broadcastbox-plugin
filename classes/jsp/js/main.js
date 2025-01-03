@@ -38,6 +38,7 @@ var midiNotesProceesed = false;
 var midiNotes = new Map();
 var streamDeckPointer = 0;
 var streamDeck = null;
+var bluetoothGuitar = null;
 var bassVol = 95;
 var chordVol = 40;
 var drumVol = 85;
@@ -314,8 +315,15 @@ function handleLiberLive(selected) {
 		}]});
 
 		if (device) {
-			await device.forget();			
-			console.debug("forget liberlive", device);
+			console.debug("found liberlive", device);	
+			
+			if (bluetoothGuitar) {
+				await device.forget();	
+				bluetoothGuitar	= null;
+				console.debug("forget liberlive", device);
+			} else {
+				bluetoothGuitar = device;
+			}
 		}
 	});
 }
@@ -333,7 +341,17 @@ function handleLavaGenie(selected) {
 			services: ["0000fee0-0000-1000-8000-00805f9b34fb"],		
 		}]});
 
-		//if (device) await device.forget();	// MIDI_SERVICE_UID		
+		if (device) {
+			console.debug("found lavagenie", device);				
+			
+			if (bluetoothGuitar) {			
+				await device.forget();
+				bluetoothGuitar	= null;				
+				console.debug("forget lavagenie", device);				
+			} else {
+				bluetoothGuitar = device;
+			}				
+		}
 	});
 }
 
@@ -414,7 +432,8 @@ async function onLavaGenieClick() {
 
 	if (devices.length > 0) {
 		device = devices[0];
-		
+		bluetoothGuitar = device;
+						
 		device.addEventListener('advertisementreceived', (event) => {	
 			//console.debug('Bluetooth device advert', event);
 			
@@ -428,9 +447,10 @@ async function onLavaGenieClick() {
 		await device.watchAdvertisements();		
 		
 	} else {
-		device = await navigator.bluetooth.requestDevice({filters: [{services: ["0000fee0-0000-1000-8000-00805f9b34fb"]}], optionalServices: ["f000ffc0-0451-4000-b000-000000000000"]});
+		device = await navigator.bluetooth.requestDevice({filters: [{services: ["0000fee0-0000-1000-8000-00805f9b34fb"]}]});
 
 		if (device) {
+			bluetoothGuitar = device;
 			textDecoder = new TextDecoder("utf-8"); 			
 			doLavaGenieSetup(device);		
 		}
@@ -458,6 +478,7 @@ async function onLiberLiveClick() {
 
 	if (devices.length > 0) {
 		device = devices[0];
+		bluetoothGuitar = device;		
 		
 		device.addEventListener('advertisementreceived', (event) => {	
 			console.debug('Bluetooth device advert', event);
@@ -472,12 +493,10 @@ async function onLiberLiveClick() {
 		await device.watchAdvertisements();		
 		
 	} else {
-		device = await navigator.bluetooth.requestDevice({		
-			filters: [{
-			services: ["000000ff-0000-1000-8000-00805f9b34fb"],
-		}]});
+		device = await navigator.bluetooth.requestDevice({filters: [{services: ["000000ff-0000-1000-8000-00805f9b34fb"]}]});
 
 		if (device) {
+			bluetoothGuitar = device;			
 			textDecoder = new TextDecoder("utf-8"); 			
 			doLiberLiveSetup(device);		
 		}
